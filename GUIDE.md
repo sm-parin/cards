@@ -16,7 +16,7 @@ Everything that was built, every decision that was made, and every problem that 
    - [shell](#53-shell)
 6. [Database Layer — Neon Postgres](#6-database-layer--neon-postgres)
 7. [Cache Layer — Upstash Redis](#7-cache-layer--upstash-redis)
-8. [Authentication — JWT](#8-authentication--jwt)
+8. [Authentication — JWT and Cross-Origin Token Passing](#8-authentication--jwt-and-cross-origin-token-passing)
 9. [Real-time Layer — Socket.IO](#9-real-time-layer--socketio)
 10. [Local Development](#10-local-development)
 11. [Deployment Architecture](#11-deployment-architecture)
@@ -51,8 +51,9 @@ cards/                          ← monorepo root
 ├── apps/
 │   ├── server/                 ← Node.js API + Socket.IO server
 │   ├── game-black-queen/       ← Next.js app — Black Queen game UI
-│   └── shell/                  ← Next.js app — platform home page / game picker
+│   └── shell/                  ← Next.js app — platform shell (auth + game picker)
 ├── packages/
+│   ├── auth/                   ← shared auth functions (login, register, token utils)
 │   ├── config/                 ← shared GAME_CONFIG constant (game URLs, metadata)
 │   ├── types/                  ← shared TypeScript types for the Black Queen game domain
 │   └── ui/                     ← shared React UI components (buttons, cards, etc.)
@@ -120,6 +121,22 @@ This tells Turbo to build only `game-black-queen` and its transitive workspace d
 
 ## 4. Shared Packages
 
+### `@cards/auth`
+
+Contains all authentication logic shared between the shell and any future game that needs to call the auth API. This package exists so that the shell — the single identity owner — doesn't duplicate fetch logic across multiple apps, and so any future frontend can call `login()` or `register()` without reimplementing the REST call.
+
+Exports:
+
+- `login(username, password)` — calls `POST /auth/login`, returns `{ token, user }`
+- `register(username, password)` — calls `POST /auth/register`, returns `{ token, user }`
+- `getShellToken()` / `setShellToken()` / `clearShellToken()` — read/write the shell's `localStorage` key (`cards_token`)
+- `decodeToken(token)` — base64-decodes a JWT payload without verifying the signature (client-side only, never used for security decisions)
+- `isTokenExpired(token)` — checks `payload.exp * 1000 < Date.now()`
+
+The package ships TypeScript source and requires `transpilePackages: ["@cards/auth"]` in any consuming Next.js app's `next.config.ts`.
+
+The `API_URL` used by `login()` and `register()` resolves from `NEXT_PUBLIC_API_URL` → `NEXT_PUBLIC_SERVER_URL` → `http://localhost:3001` in that order, so the same code works locally and in production without any change.
+
 ### `@cards/types`
 
 Contains the TypeScript type definitions for the Black Queen game domain — card suits, ranks, game state shape, socket event payloads, etc. Both the server (which emits events) and the game frontend (which receives them) import from here, which guarantees both sides always agree on the shape of the data.
@@ -128,7 +145,7 @@ The package exports raw TypeScript source (no compile step). The Next.js `next.c
 
 ### `@cards/config`
 
-Exports a single constant `GAME_CONFIG` — a record of every game the platform hosts, including its display name, description, player count range, and the URL where the game frontend lives:
+Exports a single constant `GAME_CONFIG` — a record of every game the platform hosts, including its display name, description, player count range, the production URL where the game frontend lives, and the localStorage key the game uses for its token:
 
 ```typescript
 export const GAME_CONFIG = {
@@ -137,12 +154,13 @@ export const GAME_CONFIG = {
     minPlayers: 5,
     maxPlayers: 10,
     description: "5–10 player trick-taking card game",
-    path: process.env.NEXT_PUBLIC_BLACK_QUEEN_URL || "http://localhost:3002",
+    url: process.env.NEXT_PUBLIC_BLACK_QUEEN_URL || "http://localhost:3002",
+    tokenKey: "bq_token",
   },
 };
 ```
 
-The shell app iterates `GAME_CONFIG` to render the game picker grid. The URL is injected via a `NEXT_PUBLIC_BLACK_QUEEN_URL` environment variable set in Vercel, so the shell always links to the right production URL without hardcoding it.
+The shell iterates `GAME_CONFIG` to render the game picker grid. The `url` is injected via `NEXT_PUBLIC_BLACK_QUEEN_URL` so the shell always links to the right production URL. The `tokenKey` field tells the shell which localStorage key the game uses, which matters for the cross-origin token passing mechanism described in Section 8.
 
 ### `@cards/ui`
 
@@ -229,11 +247,14 @@ Key decisions:
 
 **Location:** `apps/game-black-queen/`
 
-The Black Queen game UI. A Next.js app using the App Router. It does three things:
+The Black Queen game UI. A Next.js app using the App Router. It handles:
 
-1. **Auth** — register/login via REST (`NEXT_PUBLIC_API_URL`)
-2. **Lobby** — create/join public or private rooms, matchmaking
-3. **Game** — real-time card gameplay via Socket.IO (`NEXT_PUBLIC_SOCKET_URL`)
+1. **Token ingestion** — reads the JWT from the `?token=` URL parameter on page load, stores it under `bq_token` in localStorage, and immediately removes it from the URL (so it doesn't sit in browser history)
+2. **Auth gate** — if no `bq_token` exists after the URL check, redirects to `NEXT_PUBLIC_SHELL_URL/login`
+3. **Lobby** — create/join public or private rooms, matchmaking
+4. **Game** — real-time card gameplay via Socket.IO (`NEXT_PUBLIC_SOCKET_URL`)
+
+The game does **not** have its own login/register UI. Identity is always established at the shell level. The game receives the token from the shell via URL parameter — this is the cross-origin auth mechanism (see Section 8).
 
 The Socket.IO client is a singleton instance created once in `src/config/socket.ts` and reused everywhere. It connects to `NEXT_PUBLIC_SOCKET_URL` (defaults to `http://localhost:5000` if not set).
 
@@ -260,9 +281,17 @@ The `turbopack.root` setting expands the module resolution root to the monorepo 
 
 **Location:** `apps/shell/`
 
-The platform home page. An extremely thin Next.js app — just two files (`layout.tsx`, `page.tsx`). It renders a card grid where each card links to a game. The game list and URLs come entirely from `@cards/config`, so adding a new game only requires updating the config package — no changes to shell's code.
+The platform hub. Every user enters here first. The shell owns the entire authentication lifecycle for the platform:
 
-`NEXT_PUBLIC_BLACK_QUEEN_URL` must be set in Vercel so the link on the shell points to the production game URL rather than `http://localhost:3002`.
+- **Login/register page** (`/login`) — tab-switching form with client-side validation, calls `@cards/auth` to hit the server, stores the JWT in `localStorage` under key `cards_token`
+- **Auth context** (`src/context/AuthContext.tsx`) — a React context wrapping the entire app that loads the token from localStorage on mount, exposes the current user, and provides `login()` / `logout()` functions to any descendant component
+- **Dashboard** (`/`) — shows the game picker grid from `@cards/config`; redirects to `/login` if not authenticated
+- **Launch route** (`/launch/[gameType]`) — the critical piece. When a user clicks a game card, they arrive here. This page reads the JWT from shell's localStorage and constructs the game URL with `?token=<jwt>` appended, then does a full `window.location.href` redirect. The game receives the token in its URL, stores it locally, and removes it from the URL bar. See Section 8 for the full explanation.
+- **Header** — displays `username` and `coins`, with a logout button
+
+The shell does not contain any game logic. Its only purpose is identity and navigation. Adding a new game requires zero code changes to the shell — only a new entry in `@cards/config`.
+
+`next.config.ts` sets `transpilePackages: ["@cards/ui", "@cards/types", "@cards/config", "@cards/auth"]` because all consumed workspace packages ship TypeScript source.
 
 ---
 
@@ -303,21 +332,64 @@ Redis is used for:
 
 ---
 
-## 8. Authentication — JWT
+## 8. Authentication — JWT and Cross-Origin Token Passing
 
-The auth flow:
+### Why auth lives in the shell, not in each game
 
-1. Client sends `POST /auth/register` or `POST /auth/login`
-2. Server validates, hashes/verifies password with bcrypt, issues a JWT signed with `JWT_SECRET`
-3. Client stores the token in `localStorage`
-4. On Socket.IO connection, client sends the token in the handshake `auth` object
-5. Server middleware verifies the JWT on each connection
+The naive approach would be to put a login screen inside each game. The first version of this platform did exactly that — `game-black-queen` had its own `AuthScreen.tsx` and `authApi.ts`. The problem becomes obvious the moment you think about a second game: every game would need to re-implement login, and the user would have to log in separately for each game. That is a broken user experience.
 
-JWTs expire after 7 days (configurable in `src/utils/jwt.js`). The `JWT_SECRET` must be a strong random value — generate it with:
+The correct model: **one identity, one login, all games**. The shell is the platform — it owns auth. Every game trusts the shell.
+
+### The flow
+
+```
+1. User visits shell → redirected to /login if no cards_token in localStorage
+2. User logs in/registers → server returns JWT
+3. Shell stores JWT in localStorage under key "cards_token"
+4. User clicks a game card → shell navigates to /launch/[gameType]
+5. Launch page reads JWT from shell localStorage, appends it to game URL:
+       https://cards-game-black-queen.vercel.app?token=eyJhbG...
+6. Browser navigates to game URL (full page redirect)
+7. Game page.tsx reads ?token from URL on load
+8. Game stores token in its own localStorage under key "bq_token"
+9. Game removes ?token from URL bar (window.history.replaceState)
+10. Game socket connects with bq_token in handshake auth field
+```
+
+### Why URL parameter (not localStorage, not cookies)
+
+The shell is at `https://cards-shell.vercel.app`. The game is at `https://cards-game-black-queen.vercel.app`. These are **different origins**. The browser's same-origin policy means:
+
+- **localStorage is not shared across origins.** The shell cannot write to the game's localStorage and vice versa. Each origin has its own isolated storage.
+- **Cookies** can be shared across subdomains (e.g., `*.cards.com`) but not across completely different domains. These are different Vercel deployment URLs, not subdomains of a single domain.
+- **URL parameters** are visible to the loaded page regardless of origin. When the shell redirects to `game-url?token=...`, the game receives the URL as-is and can read `searchParams.get('token')`.
+
+The token in the URL is short-lived — the game reads it once on load and immediately removes it from the URL with `window.history.replaceState`. It never appears in server logs (the path and query string aren't sent to the Vercel CDN edge in a way that's logged per-request in the free tier). This is a well-established pattern.
+
+### Token storage keys
+
+| Location | Key | Managed by |
+|----------|-----|------------|
+| Shell localStorage | `cards_token` | `@cards/auth` — `getShellToken()` / `setShellToken()` |
+| Game localStorage | `bq_token` | `socketEmitter.ts` — `getToken()` / `setToken()` |
+
+The game and shell each have their own copy of the token. This is intentional — they are independent origins. Logging out of the game clears `bq_token` and redirects to the shell. It does **not** clear `cards_token` — the user remains logged in to the shell. This will be unified in a future session.
+
+### JWT details
+
+JWTs are signed with `JWT_SECRET` using the `jsonwebtoken` library. The payload contains:
+
+```json
+{ "userId": "...", "username": "...", "iat": ..., "exp": ... }
+```
+
+Default expiry is 7 days. The secret must be a strong random value:
 
 ```bash
 node -e "require('crypto').randomBytes(32).toString('hex')"
 ```
+
+On the Socket.IO connection, the game sends the token in the handshake `auth` object. Server middleware verifies it on every connection — invalid or expired tokens cause immediate disconnection.
 
 Never commit `JWT_SECRET` to git. It is injected via Render's environment variable panel.
 
@@ -482,13 +554,14 @@ The `vercel.json` in each app overrides the install and build commands to run fr
 ```json
 {
   "framework": "nextjs",
-  "installCommand": "cd ../.. && npm install --legacy-peer-deps",
+  "installCommand": "cd ../.. && sed -i 's/workspace://g' apps/*/package.json && npm install --legacy-peer-deps",
   "buildCommand": "cd ../.. && npx turbo run build --filter=game-black-queen",
   "outputDirectory": ".next"
 }
 ```
 
 - `cd ../..` — moves from `apps/game-black-queen/` to the monorepo root before installing/building
+- `sed -i 's/workspace://g' apps/*/package.json` — strips the pnpm-specific `workspace:` protocol from **all** apps' `package.json` files before npm runs (see Section 15 — workspace: protocol and why the glob matters)
 - `npm install` — used instead of `pnpm install` (see Section 15 — pnpm ERR_INVALID_THIS)
 - `--legacy-peer-deps` — suppresses npm peer dependency conflicts from Next.js 16 and React 19
 - `--filter=game-black-queen` — tells Turbo to build only this app and its deps, not the whole monorepo
@@ -517,17 +590,38 @@ CORS_ORIGIN=https://cards-game-black-queen.vercel.app,https://cards-shell.vercel
 ```
 NEXT_PUBLIC_SOCKET_URL=https://cards-server-20f2.onrender.com
 NEXT_PUBLIC_API_URL=https://cards-server-20f2.onrender.com
+NEXT_PUBLIC_SHELL_URL=https://cards-shell.vercel.app
 ```
+
+`NEXT_PUBLIC_SHELL_URL` is where the game redirects when no token is found — i.e., when a user lands directly on the game URL without going through the shell.
 
 ### Vercel — cards-shell (complete)
 
 ```
+NEXT_PUBLIC_API_URL=https://cards-server-20f2.onrender.com
 NEXT_PUBLIC_BLACK_QUEEN_URL=https://cards-game-black-queen.vercel.app
 ```
 
+`NEXT_PUBLIC_API_URL` is read by `@cards/auth` when calling `POST /auth/login` and `POST /auth/register`.
+
 ### Why `NEXT_PUBLIC_` prefix?
 
-Next.js only inlines environment variables into the browser bundle if they are prefixed with `NEXT_PUBLIC_`. Variables without this prefix are server-side only and are `undefined` in the client. Since both `SOCKET_URL` and `API_URL` are used in browser code (Socket.IO client, fetch calls), they must have the prefix.
+Next.js only inlines environment variables into the browser bundle if they are prefixed with `NEXT_PUBLIC_`. Variables without this prefix are server-side only and are `undefined` in the client. Since `SOCKET_URL`, `API_URL`, `SHELL_URL`, and `BLACK_QUEEN_URL` are all used in browser code, they must have the prefix.
+
+### Local development
+
+`apps/shell/.env.local`:
+```
+NEXT_PUBLIC_API_URL=http://localhost:3001
+NEXT_PUBLIC_BLACK_QUEEN_URL=http://localhost:3002
+```
+
+`apps/game-black-queen/.env.local`:
+```
+NEXT_PUBLIC_SOCKET_URL=http://localhost:3001
+NEXT_PUBLIC_API_URL=http://localhost:3001
+NEXT_PUBLIC_SHELL_URL=http://localhost:3000
+```
 
 ---
 
@@ -549,7 +643,21 @@ Next.js only inlines environment variables into the browser bundle if they are p
 
 ---
 
-### `workspace:*` protocol incompatible with npm
+### `workspace:*` protocol incompatible with npm — sed only patched one app
+
+**Problem:** The initial fix changed `workspace:*` to `*` in only the target app's `package.json` (e.g. `apps/shell/package.json`). But `npm install` processes all workspace members declared in the root `package.json` — including `apps/game-black-queen/package.json` which still contained `workspace:*`. npm aborted with `EUNSUPPORTEDPROTOCOL`.
+
+**Fix:** Broadened the sed glob in both `vercel.json` files from a single file path to `apps/*/package.json`, stripping `workspace:` from every app before npm runs:
+
+```bash
+sed -i 's/workspace://g' apps/*/package.json
+```
+
+This is safe: `workspace:*` becomes `*`, which both npm (via workspace resolution) and pnpm accept as a valid local package reference.
+
+---
+
+### `workspace:*` protocol incompatible with npm — initial fix
 
 **Problem:** pnpm uses a special `workspace:*` protocol in dependencies to reference local packages. npm does not understand this protocol and throws `EUNSUPPORTEDPROTOCOL`.
 
@@ -618,4 +726,7 @@ Next.js only inlines environment variables into the browser bundle if they are p
 | `/healthz` over `/health` | `/health`, `/ping`, `/status` | Render's free tier proxy intercepts `/health` and never forwards it to Express. `/healthz` is unintercepted. |
 | Dual-mode Redis client | Two separate codepaths | Avoids any code changes between dev and prod. Same interface consumed everywhere; backend is an implementation detail of `db/redis.js`. |
 | `CREATE TABLE IF NOT EXISTS` migrations | Flyway, node-pg-migrate | Zero external dependencies, runs at startup automatically, idempotent — safe to run on every deploy without tracking state. |
-| JWT for auth | Sessions, OAuth | JWTs are stateless — no server-side session store needed. Works naturally with Socket.IO (sent in the handshake `auth` field). |
+| JWT for auth | Sessions, OAuth | JWTs are stateless — no server-side session store needed. Works naturally with Socket.IO (sent in the handshake `auth` field). Also passable across origins via URL parameter. |
+| Auth owned by shell, not each game | Auth per game | Per-game login means users log in separately for every game and auth logic is duplicated. Shell-owned auth gives one identity for the entire platform — one login, access to all games. |
+| URL parameter for cross-origin token | Shared subdomain cookies, OAuth PKCE, postMessage | Simplest correct approach for different-origin Vercel deployments. No server round-trip, no cookie scope complexity, no message-channel setup. Token is removed from the URL immediately via `window.history.replaceState`. |
+| `sed -i apps/*/package.json` glob | Per-app sed in each vercel.json | npm install processes all workspace members, so stripping `workspace:` from only one app's package.json leaves others unpatched. The glob covers all apps in one command regardless of how many are added in future. |
