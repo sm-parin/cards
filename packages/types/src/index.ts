@@ -1,3 +1,6 @@
+// Auth types live in @cards/auth, not here.
+// Import AuthUser from @cards/auth in any file that needs it.
+
 // Shared types and constants across the cards platform.
 
 // ---------------------------------------------------------------------------

@@ -20,9 +20,9 @@ import {
   emitCreatePrivateRoom,
   emitJoinPrivateRoom,
   emitGetLobbies,
+  clearToken,
 } from "@/utils/socketEmitter";
 import { useGameStore } from "@/store/gameStore";
-import { logout } from "@/utils/authApi";
 
 const PLAYER_OPTIONS = [5, 6, 7, 8, 9, 10];
 
@@ -38,8 +38,9 @@ export default function HomeScreen() {
   const authUser = useGameStore((s) => s.authUser);
 
   const handleLogout = () => {
-    logout();
-    window.location.reload();
+    clearToken();
+    const shellUrl = process.env.NEXT_PUBLIC_SHELL_URL || 'http://localhost:3000';
+    window.location.href = shellUrl;
   };
 
   const lock = () => {
