@@ -1,6 +1,6 @@
 {
   "framework": "nextjs",
-  "installCommand": "cd ../.. && sed -i 's/workspace://g' apps/game-black-queen/package.json && npm install --legacy-peer-deps",
+  "installCommand": "cd ../.. && sed -i 's/workspace://g' apps/*/package.json && npm install --legacy-peer-deps",
   "buildCommand": "cd ../.. && npx turbo run build --filter=game-black-queen",
   "outputDirectory": ".next"
 }
