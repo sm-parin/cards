@@ -13,7 +13,7 @@
  * @module sockets/jackThiefHandler
  */
 
-const { getRoom } = require('../db/roomStore');
+const { getRoom, deleteRoom } = require('../db/roomStore');
 const { JT_EVENTS, JT_RULES } = require('../config/constants');
 const jtService = require('../services/jackThiefService');
 const { updateCoins } = require('../store/userStore');
@@ -344,6 +344,7 @@ async function checkAndEmitWinners(io, roomId, state) {
   });
 
   jackThiefGames.delete(roomId);
+  deleteRoom(roomId).catch((err) => console.error('JT deleteRoom error:', err));
   console.log(`JT game ended in room ${roomId}. Loser: ${loser}`);
 }
 
