@@ -16,9 +16,8 @@ Constraints:
 
 ---
 
-## Rule: Auto-commit after commit message (added 2026-04-05)
+## Rule: Never commit (added 2026-04-05)
 
-After presenting the commit message, immediately stage all changed files
-and run git commit using that message. Do not push. User pushes manually.
-
-Supersedes Rule 4's "do not commit" constraint.
+Never run git commit or git push.
+Only write the commit message in a code block.
+User handles all commits and pushes.
