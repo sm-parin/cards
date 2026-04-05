@@ -9,8 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@cards/config": "workspace:*",
-    "@cards/types": "workspace:*",
+    "@cards/config": "*",
+    "@cards/types": "*",
     "@tailwindcss/postcss": "^4.2.2",
     "next": "15.0.0",
     "postcss": "^8.5.8",

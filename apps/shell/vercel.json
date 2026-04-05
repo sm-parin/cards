@@ -1,6 +1,6 @@
 {
   "framework": "nextjs",
-  "installCommand": "cd ../.. && pnpm install",
-  "buildCommand": "cd ../.. && pnpm turbo run build --filter=shell",
+  "installCommand": "cd ../.. && npm install",
+  "buildCommand": "cd ../.. && npx turbo run build --filter=shell",
   "outputDirectory": ".next"
 }
