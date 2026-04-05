@@ -51,6 +51,7 @@ export default function PlayingScreen() {
   // Pair-discard selection
   const [selectedForDiscard, setSelectedForDiscard] = useState<number | null>(null);
 
+  const bufferCountdown = useCountdown(gameState?.bufferActive ?? false, 10);
   const pickCountdown = useCountdown(gameState?.pickWindowActive ?? false, 20);
 
   if (!room || !gameState) return null;
@@ -81,7 +82,7 @@ export default function PlayingScreen() {
   };
 
   // ---------------------------------------------------------------------------
-  // Pair-discard handler for own hand
+  // Pair-discard handler for own hand (allowed in both pre-game and playing)
   // ---------------------------------------------------------------------------
 
   const handleOwnCardClick = (index: number) => {
@@ -152,23 +153,29 @@ export default function PlayingScreen() {
         {/* Turn indicator */}
         <div className="text-center bg-surface border border-border rounded-xl px-4 py-3">
           {isSelfPicker && !gameState.targetPlayerId ? (
-            <p className="text-sm font-semibold text-primary">
-              Your turn — select a player to pick from ({pickCountdown}s)
+            <p className="text-sm font-semibold text-primary">Your turn — select a player to pick from</p>
+          ) : isSelfPicker && gameState.bufferActive ? (
+            <p className="text-sm font-semibold text-warning">
+              Picking from <span className="font-bold">{targetName}</span> — buffer {bufferCountdown}s
             </p>
-          ) : isSelfPicker && gameState.targetPlayerId ? (
+          ) : isSelfPicker && gameState.pickWindowActive ? (
             <p className="text-sm font-semibold text-primary">
               Pick a card from <span className="font-bold">{targetName}</span> — {pickCountdown}s left
             </p>
-          ) : isSelfTarget && gameState.pickWindowActive ? (
+          ) : isSelfTarget && gameState.bufferActive ? (
             <p className="text-sm font-semibold text-warning">
-              <span className="font-bold">{currentPickerName}</span> is targeting you — {pickCountdown}s
+              <span className="font-bold">{currentPickerName}</span> is targeting you — {bufferCountdown}s before pick
+            </p>
+          ) : isSelfTarget && gameState.pickWindowActive ? (
+            <p className="text-sm font-semibold text-danger">
+              <span className="font-bold">{currentPickerName}</span> is picking from you — {pickCountdown}s
             </p>
           ) : isSelfWinner ? (
             <p className="text-sm text-success font-semibold">You won! Spectating...</p>
           ) : (
             <p className="text-sm text-muted">
               {targetName
-                ? `${currentPickerName} picking from ${targetName}${gameState.pickWindowActive ? ` (${pickCountdown}s)` : ""}`
+                ? `${currentPickerName} picking from ${targetName}${gameState.bufferActive ? ` (${bufferCountdown}s)` : gameState.pickWindowActive ? ` (${pickCountdown}s)` : ""}`
                 : `${currentPickerName}'s turn`}
             </p>
           )}
@@ -212,8 +219,7 @@ export default function PlayingScreen() {
                 isActive &&
                 handCount > 0 &&
                 gameState.targetPlayerId === null &&
-                !constraintBlocked &&
-                gameState.pickWindowActive;
+                !constraintBlocked;
 
               const canPickCards = isSelfPicker && isThisTarget && gameState.pickWindowActive;
 
@@ -276,7 +282,7 @@ export default function PlayingScreen() {
                             "flex items-center justify-center",
                             canPickCards
                               ? "border-primary bg-primary/20 hover:bg-primary/40 hover:scale-105 cursor-pointer"
-                              : isThisTarget
+                              : isThisTarget && gameState.bufferActive
                               ? "border-warning/60 bg-warning/10 cursor-not-allowed"
                               : "border-border bg-surface opacity-50 cursor-not-allowed",
                           ].join(" ")}
@@ -327,11 +333,11 @@ export default function PlayingScreen() {
                     onDrop={() => canSelfReorder && onDrop(i)}
                     onClick={() => handleOwnCardClick(i)}
                     className={[
-                      "px-3 py-2 rounded-lg border text-sm font-semibold font-mono select-none transition-all",
+                      "px-3 py-2 rounded-lg border text-sm font-semibold font-mono select-none transition-all cursor-pointer",
                       red ? "text-red-500" : "text-foreground",
                       isSelected
-                        ? "border-primary ring-2 ring-primary bg-primary/10 scale-105 cursor-pointer"
-                        : "border-border bg-surface hover:border-primary/60 cursor-pointer",
+                        ? "border-primary ring-2 ring-primary bg-primary/10 scale-105"
+                        : "border-border bg-surface hover:border-primary/60",
                       canSelfReorder ? "cursor-grab active:cursor-grabbing" : "",
                     ].join(" ")}
                   >

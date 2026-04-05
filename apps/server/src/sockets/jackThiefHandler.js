@@ -7,11 +7,12 @@
  *   pre-game (40s manual pair-discard) → playing (turn-based picks) → ended
  *
  * Turn flow in playing phase:
- *   1. Turn assigned → JT_TURN_UPDATE + JT_PICK_TIMER_START (20s clock starts)
- *   2. Active player (currentPickerId) emits JT_SELECT_TARGET { targetPlayerId }
- *      → JT_TARGET_SELECTED broadcast (no buffer; clock is already running)
- *   3. Active player emits JT_PICK_CARD at any point during the 20s window
- *   4. OR 20s clock expires → turn auto-passes to targetPlayerId (or next active)
+ *   1. Active player (currentPickerId) emits JT_SELECT_TARGET { targetPlayerId }
+ *   2. 10-sec buffer starts → JT_TARGET_SELECTED broadcast
+ *   3. Buffer expires → 20-sec pick window opens → JT_PICK_TIMER_START broadcast
+ *   4. Active player emits JT_PICK_CARD (any time during pick window)
+ *      OR 20-sec timer expires → turn auto-passes to target
+ *   5. Turn passes to fromPlayerId → JT_TURN_UPDATE broadcast
  *
  * Pair discard (JT_DISCARD_PAIR) is allowed in BOTH pre-game AND playing phases.
  *
@@ -46,7 +47,8 @@ const { generateId } = require('../utils/generateId');
  * @property {string[]} activePlayers
  * @property {string|null} currentPickerId              - Whose turn it is
  * @property {string|null} targetPlayerId               - Selected target (after JT_SELECT_TARGET)
- * @property {NodeJS.Timeout|null} pickTimer            - 20-sec turn timer
+ * @property {NodeJS.Timeout|null} selectTimer          - 10-sec buffer timer
+ * @property {NodeJS.Timeout|null} pickTimer            - 20-sec pick window timer
  */
 const jackThiefGames = new Map();
 
@@ -80,63 +82,6 @@ function registerJackThiefHandlers(socket, io) {
   socket.on(JT_EVENTS.JT_REORDER_HAND, (payload) =>
     handleReorderHand(socket, payload),
   );
-}
-
-// ---------------------------------------------------------------------------
-// Turn timer helpers
-// ---------------------------------------------------------------------------
-
-/**
- * Start a fresh 20-sec pick timer for the current picker.
- * Broadcasts JT_PICK_TIMER_START to the room.
- * On expiry, advances the turn to targetPlayerId (or next active player).
- */
-function startPickTimer(io, roomId, state) {
-  if (state.pickTimer) {
-    clearTimeout(state.pickTimer);
-    state.pickTimer = null;
-  }
-
-  state.pickTimer = setTimeout(() => {
-    state.pickTimer = null;
-    const prev = state.currentPickerId;
-    const prevTarget = state.targetPlayerId;
-    state.targetPlayerId = null;
-
-    // Pass turn to selected target if still active, else next active player
-    let nextPicker;
-    if (prevTarget && state.activePlayers.includes(prevTarget)) {
-      nextPicker = prevTarget;
-    } else {
-      const idx = state.activePlayers.indexOf(prev);
-      nextPicker = state.activePlayers[(idx + 1) % state.activePlayers.length] ?? state.activePlayers[0];
-    }
-
-    state.currentPickerId = nextPicker;
-    io.to(roomId).emit(JT_EVENTS.JT_TURN_UPDATE, {
-      currentPickerId: nextPicker,
-      targetPlayerId: null,
-    });
-    console.log(`JT pick timer expired in room ${roomId}, turn → ${nextPicker}`);
-    startPickTimer(io, roomId, state);
-  }, JT_RULES.PICK_CARD_DURATION_MS);
-
-  io.to(roomId).emit(JT_EVENTS.JT_PICK_TIMER_START, {
-    duration: JT_RULES.PICK_CARD_DURATION_MS / 1000,
-  });
-}
-
-/**
- * Advance turn to nextPickerId and restart the 20s timer.
- */
-function advanceTurn(io, roomId, state, nextPickerId) {
-  state.targetPlayerId = null;
-  state.currentPickerId = nextPickerId;
-  io.to(roomId).emit(JT_EVENTS.JT_TURN_UPDATE, {
-    currentPickerId: nextPickerId,
-    targetPlayerId: null,
-  });
-  startPickTimer(io, roomId, state);
 }
 
 // ---------------------------------------------------------------------------
@@ -186,6 +131,7 @@ async function handleStartGame(socket, io, payload) {
     activePlayers: [...playerIds],
     currentPickerId: firstPickerId,
     targetPlayerId: null,
+    selectTimer: null,
     pickTimer: null,
   };
 
@@ -217,7 +163,7 @@ async function handleStartGame(socket, io, payload) {
 }
 
 // ---------------------------------------------------------------------------
-// Pre-game: discard pairs
+// Pre-game and playing phase: discard pairs
 // ---------------------------------------------------------------------------
 
 function handleDiscardPair(socket, io, payload) {
@@ -267,7 +213,7 @@ function handleDiscardPair(socket, io, payload) {
 // Pre-game timer expiry — no auto-discard; cards stay as-is
 // ---------------------------------------------------------------------------
 
-async function endPreGame(io, roomId) {
+function endPreGame(io, roomId) {
   const state = jackThiefGames.get(roomId);
   if (!state || state.phase !== 'pre-game') return;
 
@@ -280,17 +226,15 @@ async function endPreGame(io, roomId) {
   });
 
   // Defensive: check for any immediately-empty hands
-  await checkAndEmitWinners(io, roomId, state);
-  if (state.phase === 'ended') return;
-
-  // Start first turn timer
-  startPickTimer(io, roomId, state);
+  checkAndEmitWinners(io, roomId, state).catch((err) =>
+    console.error('endPreGame win-check error:', err),
+  );
 
   console.log(`JT pre-game ended in room ${roomId}`);
 }
 
 // ---------------------------------------------------------------------------
-// Playing: select target
+// Playing: select target — starts 10-sec buffer
 // ---------------------------------------------------------------------------
 
 function handleSelectTarget(socket, io, payload) {
@@ -315,21 +259,46 @@ function handleSelectTarget(socket, io, payload) {
     return socket.emit(JT_EVENTS.JT_ERROR, { message: 'Target already selected' });
   }
 
-  // Turn timer must be active
-  if (state.pickTimer === null) {
-    return socket.emit(JT_EVENTS.JT_ERROR, { message: 'No active turn timer' });
-  }
-
   const validationErr = jtService.validatePickTarget(state, pickerId, targetPlayerId);
   if (validationErr) return socket.emit(JT_EVENTS.JT_ERROR, { message: validationErr });
 
   state.targetPlayerId = targetPlayerId;
 
-  // No buffer — pick window is already open (timer started with turn assignment)
   io.to(roomId).emit(JT_EVENTS.JT_TARGET_SELECTED, {
     currentPickerId: pickerId,
     targetPlayerId,
+    bufferDuration: JT_RULES.SELECT_TARGET_BUFFER_MS / 1000,
   });
+
+  // 10-sec buffer before pick window opens
+  state.selectTimer = setTimeout(() => {
+    state.selectTimer = null;
+
+    // Check target is still active (may have won during buffer — edge case)
+    if (!state.activePlayers.includes(targetPlayerId)) {
+      state.targetPlayerId = null;
+      io.to(roomId).emit(JT_EVENTS.JT_TURN_UPDATE, { currentPickerId: state.currentPickerId, targetPlayerId: null });
+      return;
+    }
+
+    io.to(roomId).emit(JT_EVENTS.JT_PICK_TIMER_START, {
+      duration: JT_RULES.PICK_CARD_DURATION_MS / 1000,
+    });
+
+    // 20-sec pick window — auto-pass on expiry
+    state.pickTimer = setTimeout(() => {
+      state.pickTimer = null;
+      const prevTarget = state.targetPlayerId;
+      state.targetPlayerId = null;
+      state.currentPickerId = prevTarget;
+      io.to(roomId).emit(JT_EVENTS.JT_TURN_UPDATE, {
+        currentPickerId: state.currentPickerId,
+        targetPlayerId: null,
+      });
+      console.log(`JT pick timer expired in room ${roomId}, turn passed to ${prevTarget}`);
+    }, JT_RULES.PICK_CARD_DURATION_MS);
+
+  }, JT_RULES.SELECT_TARGET_BUFFER_MS);
 }
 
 // ---------------------------------------------------------------------------
@@ -357,9 +326,14 @@ async function handlePickCard(socket, io, payload) {
     return socket.emit(JT_EVENTS.JT_ERROR, { message: 'Pick from the selected target only' });
   }
 
-  // Turn timer must be active
+  // Buffer must have expired
+  if (state.selectTimer !== null) {
+    return socket.emit(JT_EVENTS.JT_ERROR, { message: 'Wait for the buffer to end before picking' });
+  }
+
+  // Pick window must be open
   if (state.pickTimer === null) {
-    return socket.emit(JT_EVENTS.JT_ERROR, { message: 'Turn timer expired — turn has passed' });
+    return socket.emit(JT_EVENTS.JT_ERROR, { message: 'No active pick window' });
   }
 
   // Mutex
@@ -407,18 +381,23 @@ async function handlePickCard(socket, io, payload) {
     }
   }
 
-  // Turn passes to the player who was picked from
+  // Turn passes to the player who was just picked from
   state.currentPickerId = fromPlayerId;
 
   await checkAndEmitWinners(io, roomId, state);
+
+  // If game ended, checkAndEmitWinners already handled cleanup
   if (state.phase === 'ended') return;
 
-  // If the new picker is no longer active (won), advance to next
+  // If the new currentPickerId is no longer active (won), advance to next active player
   if (!state.activePlayers.includes(state.currentPickerId)) {
     state.currentPickerId = state.activePlayers[0];
   }
 
-  advanceTurn(io, roomId, state, state.currentPickerId);
+  io.to(roomId).emit(JT_EVENTS.JT_TURN_UPDATE, {
+    currentPickerId: state.currentPickerId,
+    targetPlayerId: null,
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -486,7 +465,7 @@ async function checkAndEmitWinners(io, roomId, state) {
   state.loser = loser;
 
   // Cancel any outstanding timers
-  if (state.preGameTimer) { clearTimeout(state.preGameTimer); state.preGameTimer = null; }
+  if (state.selectTimer) { clearTimeout(state.selectTimer); state.selectTimer = null; }
   if (state.pickTimer) { clearTimeout(state.pickTimer); state.pickTimer = null; }
 
   const matchId = generateId();
@@ -545,6 +524,7 @@ function handleJTRejoin(socket, roomId) {
     duration: JT_RULES.PRE_GAME_DURATION_MS / 1000,
     currentPickerId: state.currentPickerId,
     targetPlayerId: state.targetPlayerId,
+    bufferActive: state.selectTimer !== null,
     pickWindowActive: state.pickTimer !== null,
   });
 }

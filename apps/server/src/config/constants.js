@@ -128,7 +128,9 @@ const JT_RULES = {
   MAX_PLAYERS: 13,
   /** Pre-game pair-discard phase duration in milliseconds */
   PRE_GAME_DURATION_MS: 40_000,
-  /** Turn timer — active picker must pick within this window (ms) */
+  /** Buffer after target selected before pick window opens (ms) */
+  SELECT_TARGET_BUFFER_MS: 10_000,
+  /** Duration of the pick window (ms) — after buffer, before auto-pass */
   PICK_CARD_DURATION_MS: 20_000,
   /** Coins awarded to winners */
   WIN_COINS: 100,

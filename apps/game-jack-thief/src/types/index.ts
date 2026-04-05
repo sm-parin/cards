@@ -42,6 +42,8 @@ export interface JtGameState {
   currentPickerId: string | null;
   /** Who has been selected as the pick target (after JT_SELECT_TARGET) */
   targetPlayerId: string | null;
+  /** True while 10-sec buffer is running */
+  bufferActive: boolean;
   /** True while 20-sec turn pick window is open */
   pickWindowActive: boolean;
   /** Coin deltas — available after game ends */
@@ -89,6 +91,7 @@ export interface JtPreGameEndedPayload {
 export interface JtTargetSelectedPayload {
   currentPickerId: string;
   targetPlayerId: string;
+  bufferDuration: number;
 }
 
 export interface JtPickTimerStartPayload {
@@ -141,6 +144,7 @@ export interface JtGameStatePayload {
   duration: number;
   currentPickerId: string | null;
   targetPlayerId: string | null;
+  bufferActive: boolean;
   pickWindowActive: boolean;
 }
 
