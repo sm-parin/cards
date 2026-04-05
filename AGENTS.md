@@ -2,7 +2,16 @@
 # Overwrite this file completely at the end of every session.
 # Never append — always replace the full file.
 # Goal: give AI agents complete platform context in minimum tokens.
-# Last updated: 2026-04-05 — documentation bootstrap session
+# Last updated: 2026-04-05 — me-talk instruction added
+
+## Step 0 reading list (mandatory before any work)
+1. AGENTS.md (this file)
+2. docs/WRITING_GUIDE.md
+3. docs/agent-instructions.md — permanent rules added via ADD INSTRUCTION protocol
+
+## Communication style
+See docs/agent-instructions.md. Currently: Me talk (short 3-6 word sentences,
+no filler, tools first, drop articles).
 
 ## What this platform is
 Multi-game card platform. Shell owns auth. Games receive JWT via URL param.
