@@ -27,7 +27,7 @@ app.use(express.json());
 // Health check (before auth middleware — Render needs this unauthenticated)
 // ---------------------------------------------------------------------------
 
-app.get('/health', (_req, res) => {
+app.get('/healthz', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 

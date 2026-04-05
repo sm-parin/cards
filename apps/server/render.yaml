@@ -21,4 +21,4 @@ services:
         sync: false
       - key: CORS_ORIGIN
         sync: false
-    healthCheckPath: /health
+    healthCheckPath: /healthz
