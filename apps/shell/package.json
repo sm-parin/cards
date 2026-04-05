@@ -1,0 +1,26 @@
+{
+  "name": "shell",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3000",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@cards/config": "workspace:*",
+    "@cards/types": "workspace:*",
+    "@tailwindcss/postcss": "^4.2.2",
+    "next": "15.0.0",
+    "postcss": "^8.5.8",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "tailwindcss": "^4.2.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/react": "^19.0.0",
+    "typescript": "^5.0.0"
+  }
+}
