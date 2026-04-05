@@ -16,6 +16,11 @@ import {
   type AuthUser,
 } from '@cards/auth';
 
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  process.env.NEXT_PUBLIC_SERVER_URL ||
+  'http://localhost:5000';
+
 interface AuthContextValue {
   user: AuthUser | null;
   token: string | null;
@@ -26,25 +31,59 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+async function fetchFreshUser(token: string): Promise<AuthUser | null> {
+  try {
+    const res = await fetch(`${API_URL}/auth/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.user as AuthUser;
+  } catch {
+    return null;
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const initFromToken = useCallback(async (stored: string) => {
+    if (isTokenExpired(stored)) return;
+    const payload = decodeToken(stored);
+    if (!payload) return;
+    // Optimistically set from JWT so UI shows instantly
+    setToken(stored);
+    setUser({ id: payload.userId, username: payload.username, coins: 0 });
+    // Then fetch fresh coins from server
+    const fresh = await fetchFreshUser(stored);
+    if (fresh) setUser(fresh);
+  }, []);
+
   useEffect(() => {
-    // On mount, check if a valid token already exists in localStorage
     const stored = getShellToken();
-    if (stored && !isTokenExpired(stored)) {
-      const payload = decodeToken(stored);
-      if (payload) {
-        setToken(stored);
-        // Coins will be 0 until a real profile fetch is added in a later step.
-        // For now, username and id are enough to show the user is logged in.
-        setUser({ id: payload.userId, username: payload.username, coins: 0 });
+    if (stored) {
+      initFromToken(stored).finally(() => setLoading(false));
+    } else {
+      setLoading(false);
+    }
+  }, [initFromToken]);
+
+  // Cross-tab sync — when another tab logs in or out, reflect it here
+  useEffect(() => {
+    function onStorage(e: StorageEvent) {
+      if (e.key !== 'cards_token') return;
+      if (!e.newValue) {
+        setToken(null);
+        setUser(null);
+      } else {
+        initFromToken(e.newValue);
       }
     }
-    setLoading(false);
-  }, []);
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, [initFromToken]);
 
   const login = useCallback((newToken: string, newUser: AuthUser) => {
     setShellToken(newToken);

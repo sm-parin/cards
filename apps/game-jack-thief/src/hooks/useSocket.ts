@@ -73,7 +73,13 @@ export function useSocket(): void {
 
   useEffect(() => {
     // ── On every connect/reconnect, fire INIT_PLAYER ──────────────────────
-    const onConnect = () => emitInitPlayer();
+    const onConnect = () => {
+      const authUser = useGameStore.getState().authUser;
+      if (authUser && authUser.id === '') {
+        useGameStore.getState().setAuthUser({ ...authUser, id: socketInstance.id ?? '' });
+      }
+      emitInitPlayer();
+    };
     socketInstance.on("connect", onConnect);
 
     connectSocket();

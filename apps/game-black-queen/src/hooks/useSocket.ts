@@ -94,6 +94,12 @@ export function useSocket(): void {
     // The server checks the stable playerId against all active rooms and
     // emits REJOIN_SUCCESS if a match is found — no roomId needed from client.
     const onConnect = () => {
+      // For guest users, the server uses socket.id as their userId.
+      // Sync it here so findSelf can match them in room player lists.
+      const authUser = useGameStore.getState().authUser;
+      if (authUser && authUser.id === '') {
+        useGameStore.getState().setAuthUser({ ...authUser, id: socketInstance.id ?? '' });
+      }
       emitInitPlayer();
     };
     socketInstance.on("connect", onConnect);

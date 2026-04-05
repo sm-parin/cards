@@ -38,32 +38,27 @@ function initSockets(io) {
  * @returns {Promise<void>}
  */
 async function onConnection(socket, io) {
-  // ── JWT verification ─────────────────────────────────────────────────────
+  // ── JWT verification (guests allowed) ────────────────────────────────────
   const token = socket.handshake.auth?.token;
-  if (!token) {
-    socket.emit('ERROR', { message: 'Authentication required' });
-    socket.disconnect(true);
-    return;
+  let authUser = null;
+
+  if (token) {
+    try {
+      const payload = verifyToken(token);
+      authUser = await getUserById(payload.userId);
+    } catch (e) {
+      // Invalid/expired token — fall through to guest
+    }
   }
 
-  let authUser;
-  try {
-    const payload = verifyToken(token);
-    authUser = await getUserById(payload.userId);
-  } catch (e) {
-    socket.emit('ERROR', { message: 'Invalid or expired token' });
-    socket.disconnect(true);
-    return;
-  }
-
+  // No valid token → treat as guest (temporary identity, no DB persistence)
   if (!authUser) {
-    socket.emit('ERROR', { message: 'User not found' });
-    socket.disconnect(true);
-    return;
+    const guestNum = Math.floor(Math.random() * 9000) + 1000;
+    authUser = { id: socket.id, username: `Guest_${guestNum}`, coins: 0, isGuest: true };
   }
 
   // Attach to socket for use in all handlers
-  socket.authUser = authUser; // { id, username, coins }
+  socket.authUser = authUser; // { id, username, coins, isGuest? }
 
   console.log(`User connected: ${socket.id} (userId: ${authUser.id})`);
 

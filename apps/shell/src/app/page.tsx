@@ -1,20 +1,13 @@
 'use client';
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '../context/AuthContext';
 import { GAME_CONFIG } from '@cards/config';
 import Header from '../components/Header';
 
 export default function Dashboard() {
-  const { user, loading } = useAuth();
-  const router = useRouter();
+  const { loading } = useAuth();
 
-  useEffect(() => {
-    if (!loading && !user) router.replace('/login');
-  }, [loading, user, router]);
-
-  if (loading || !user) return null;
+  if (loading) return null;
 
   const games = Object.entries(GAME_CONFIG);
 

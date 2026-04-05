@@ -7,17 +7,11 @@ import { GAME_CONFIG } from '@cards/config';
 export default function LaunchPage() {
   const params = useParams();
   const router = useRouter();
-  const { token, user, loading } = useAuth();
+  const { token, loading } = useAuth();
   const gameType = params.gameType as string;
 
   useEffect(() => {
     if (loading) return;
-
-    // Not logged in → send to login
-    if (!user || !token) {
-      router.replace('/login');
-      return;
-    }
 
     const config = GAME_CONFIG[gameType as keyof typeof GAME_CONFIG];
     if (!config) {
@@ -25,11 +19,12 @@ export default function LaunchPage() {
       return;
     }
 
-    // Redirect to game URL with token in query param
     const gameUrl = new URL(config.url);
-    gameUrl.searchParams.set('token', token);
-    window.location.href = gameUrl.toString();
-  }, [loading, user, token, gameType, router]);
+    // Pass token if logged in; guests go without one
+    if (token) gameUrl.searchParams.set('token', token);
+    // replace() so the launch page is not in browser history
+    window.location.replace(gameUrl.toString());
+  }, [loading, token, gameType, router]);
 
   return (
     <div className="min-h-screen flex items-center justify-center">

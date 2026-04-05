@@ -23,4 +23,22 @@ router.post('/login', async (req, res) => {
   res.json({ token, user: result.user });
 });
 
+// GET /auth/me — return fresh profile (coins) for a valid token
+router.get('/me', async (req, res) => {
+  const auth = req.headers.authorization;
+  if (!auth || !auth.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  const { verifyToken } = require('../utils/jwt');
+  const { getUserById } = require('../store/userStore');
+  try {
+    const payload = verifyToken(auth.slice(7));
+    const user = await getUserById(payload.userId);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json({ user });
+  } catch {
+    res.status(401).json({ error: 'Invalid or expired token' });
+  }
+});
+
 module.exports = router;
