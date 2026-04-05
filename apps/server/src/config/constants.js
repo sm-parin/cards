@@ -87,4 +87,48 @@ const BID_RULES = {
  */
 const SUITS = ['♥', '♣', '♦', '♠'];
 
-module.exports = { EVENTS, GAME_RULES, PASSKEY, BID_RULES, SUITS };
+/**
+ * Socket event name constants for the Jack-Thief game.
+ * All events are prefixed JT_ to prevent collision with Black Queen events.
+ */
+const JT_EVENTS = {
+  // Inbound (client → server)
+  JT_START_GAME:    'JT_START_GAME',
+  JT_DISCARD_PAIR:  'JT_DISCARD_PAIR',
+  JT_PICK_CARD:     'JT_PICK_CARD',
+
+  // Outbound (server → client)
+  JT_GAME_STARTED:   'JT_GAME_STARTED',
+  JT_PLAYER_HAND:    'JT_PLAYER_HAND',
+  JT_PRE_GAME_STARTED: 'JT_PRE_GAME_STARTED',
+  JT_PAIR_DISCARDED: 'JT_PAIR_DISCARDED',
+  JT_PRE_GAME_ENDED: 'JT_PRE_GAME_ENDED',
+  JT_CARD_PICKED:    'JT_CARD_PICKED',
+  JT_HAND_UPDATE:    'JT_HAND_UPDATE',
+  JT_PLAYER_WON:     'JT_PLAYER_WON',
+  JT_GAME_ENDED:     'JT_GAME_ENDED',
+  JT_GAME_STATE:     'JT_GAME_STATE',
+  JT_ERROR:          'JT_ERROR',
+};
+
+/**
+ * Jack-Thief game rule constants.
+ */
+const JT_RULES = {
+  /** Players using 1 deck */
+  MAX_PLAYERS_ONE_DECK: 5,
+  /** Min players */
+  MIN_PLAYERS: 2,
+  /** Max players supported */
+  MAX_PLAYERS: 13,
+  /** Pre-game pair-discard phase duration in milliseconds */
+  PRE_GAME_DURATION_MS: 40_000,
+  /** Coins awarded to winners */
+  WIN_COINS: 100,
+  /** Coins deducted from the loser */
+  LOSE_COINS: -200,
+  /** Max times one player can pick from the same player (when >3 active) */
+  MAX_PICKS_FROM_SAME: 3,
+};
+
+module.exports = { EVENTS, GAME_RULES, PASSKEY, BID_RULES, SUITS, JT_EVENTS, JT_RULES };

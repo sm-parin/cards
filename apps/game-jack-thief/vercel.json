@@ -1,0 +1,6 @@
+{
+  "framework": "nextjs",
+  "installCommand": "cd ../.. && sed -i 's/workspace://g' apps/*/package.json packages/*/package.json && npm install --legacy-peer-deps",
+  "buildCommand": "cd ../.. && npx turbo run build --filter=game-jack-thief",
+  "outputDirectory": ".next"
+}

@@ -11,6 +11,14 @@ export const GAME_CONFIG = {
     // Must match what the game reads on startup.
     tokenKey: 'bq_token',
   },
+  'jack-thief': {
+    displayName: 'Jack Thief',
+    minPlayers: 2,
+    maxPlayers: 13,
+    description: '2–13 player card game — don\'t get caught holding the Jack!',
+    url: process.env.NEXT_PUBLIC_JACK_THIEF_URL || 'http://localhost:3003',
+    tokenKey: 'jt_token',
+  },
 } as const;
 
 export type GameType = keyof typeof GAME_CONFIG;

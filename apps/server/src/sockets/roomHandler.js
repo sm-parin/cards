@@ -165,8 +165,8 @@ function handleUpdateMaxPlayers(socket, io, payload) {
     return;
   }
 
-  if (maxPlayers < 5 || maxPlayers > 10) {
-    socket.emit(EVENTS.ERROR, { message: 'Player limit must be between 5 and 10' });
+  if (maxPlayers < 2 || maxPlayers > 13) {
+    socket.emit(EVENTS.ERROR, { message: 'Player limit must be between 2 and 13' });
     return;
   }
 
@@ -197,7 +197,7 @@ async function handleCreatePublicLobby(socket, io, payload) {
     return;
   }
 
-  const maxPlayers = (payload && Number.isInteger(payload.maxPlayers) && payload.maxPlayers >= 5 && payload.maxPlayers <= 10)
+  const maxPlayers = (payload && Number.isInteger(payload.maxPlayers) && payload.maxPlayers >= 2 && payload.maxPlayers <= 13)
     ? payload.maxPlayers
     : 5;
 

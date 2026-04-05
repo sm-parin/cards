@@ -4,6 +4,12 @@ import { useSearchParams } from 'next/navigation';
 import { getToken, setToken } from '@/utils/socketEmitter';
 import { useGameStore } from '@/store/gameStore';
 import AppView from '@/components/AppView';
+import { registerGameTranslations } from '@cards/i18n';
+import gameLocale from '@/config/locales/en.json';
+
+// Register Black Queen strings. Platform strings from @cards/i18n are always
+// available as a fallback — no keys need to be duplicated here.
+registerGameTranslations('en', gameLocale as Record<string, string>);
 
 function PageContent() {
   const searchParams = useSearchParams();

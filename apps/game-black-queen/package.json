@@ -9,7 +9,12 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@cards/types": "workspace:*",
+    "@cards/types":    "workspace:*",
+    "@cards/ui":       "workspace:*",
+    "@cards/i18n":     "workspace:*",
+    "@cards/hooks":    "workspace:*",
+    "@cards/theme":    "workspace:*",
+    "@cards/game-sdk": "workspace:*",
     "next": "16.2.2",
     "react": "19.2.4",
     "react-dom": "19.2.4",

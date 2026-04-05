@@ -6,6 +6,7 @@ const { registerGameHandlers } = require('./gameHandler');
 const { registerBiddingHandlers } = require('./biddingHandler');
 const { registerPartnerHandlers } = require('./partnerHandler');
 const { registerGameplayHandlers } = require('./gameplayHandler');
+const { registerJackThiefHandlers, handleJTRejoin, getJTGame } = require('./jackThiefHandler');
 const { getAllRooms, deleteRoom, findRoomByUserId, updatePlayerId } = require('../db/roomStore');
 const { verifyToken } = require('../utils/jwt');
 const { getUserById } = require('../store/userStore');
@@ -72,6 +73,7 @@ async function onConnection(socket, io) {
   registerBiddingHandlers(socket, io);
   registerPartnerHandlers(socket, io);
   registerGameplayHandlers(socket, io);
+  registerJackThiefHandlers(socket, io);
 
   // ── INIT_PLAYER ────────────────────────────────────────────────────────────
   socket.on(EVENTS.INIT_PLAYER, () => handleInitPlayer(socket, io));
@@ -149,6 +151,11 @@ function handleInitPlayer(socket, io) {
     if (currentPlayerId) {
       socket.emit(EVENTS.TURN_UPDATE, { currentPlayerId });
     }
+  }
+
+  // If this is a Jack-Thief room, restore JT game state
+  if (getJTGame(room.roomId)) {
+    handleJTRejoin(socket, room.roomId);
   }
 
   io.to(room.roomId).emit(EVENTS.ROOM_UPDATE, { players: room.players });

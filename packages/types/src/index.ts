@@ -7,7 +7,29 @@
 // Domain types
 // ---------------------------------------------------------------------------
 
-export type GameType = "black-queen";
+/**
+ * A playing card represented as a string: rank + suit symbol.
+ * Examples: "A♠", "10♥", "Q♦", "J♣"
+ * Both games use this format throughout.
+ */
+export type Card = string;
+
+/**
+ * Minimal shared Room interface. Both BQ Room and JT JtRoom satisfy this.
+ * Use in shared packages (game-sdk, ui) where the concrete game type is unknown.
+ */
+export interface Room {
+  roomId: string;
+  players: RoomPlayer[];
+  maxPlayers: number;
+  status: "waiting" | "playing";
+  isPrivate: boolean;
+  passkey?: string | null;
+  creatorName: string;
+  game?: unknown;
+}
+
+export type GameType = "black-queen" | "jack-thief";
 
 export type GamePhase =
   | "bidding"
@@ -83,6 +105,53 @@ export const SERVER_EVENTS = {
 
 export type ClientEvent = (typeof CLIENT_EVENTS)[keyof typeof CLIENT_EVENTS];
 export type ServerEvent = (typeof SERVER_EVENTS)[keyof typeof SERVER_EVENTS];
+
+// ---------------------------------------------------------------------------
+// Jack-Thief game phase
+// ---------------------------------------------------------------------------
+
+export type JtGamePhase = "pre-game" | "playing" | "ended";
+
+// ---------------------------------------------------------------------------
+// Jack-Thief socket event name constants
+// ---------------------------------------------------------------------------
+
+/** Events emitted BY the client for Jack-Thief (frontend → backend) */
+export const JT_CLIENT_EVENTS = {
+  JT_START_GAME:   "JT_START_GAME",
+  JT_DISCARD_PAIR: "JT_DISCARD_PAIR",
+  JT_PICK_CARD:    "JT_PICK_CARD",
+} as const;
+
+/** Events emitted BY the server for Jack-Thief (backend → frontend) */
+export const JT_SERVER_EVENTS = {
+  JT_GAME_STARTED:    "JT_GAME_STARTED",
+  JT_PLAYER_HAND:     "JT_PLAYER_HAND",
+  JT_PRE_GAME_STARTED:"JT_PRE_GAME_STARTED",
+  JT_PAIR_DISCARDED:  "JT_PAIR_DISCARDED",
+  JT_PRE_GAME_ENDED:  "JT_PRE_GAME_ENDED",
+  JT_CARD_PICKED:     "JT_CARD_PICKED",
+  JT_HAND_UPDATE:     "JT_HAND_UPDATE",
+  JT_PLAYER_WON:      "JT_PLAYER_WON",
+  JT_GAME_ENDED:      "JT_GAME_ENDED",
+  JT_GAME_STATE:      "JT_GAME_STATE",
+  JT_ERROR:           "JT_ERROR",
+} as const;
+
+export type JtClientEvent = (typeof JT_CLIENT_EVENTS)[keyof typeof JT_CLIENT_EVENTS];
+export type JtServerEvent = (typeof JT_SERVER_EVENTS)[keyof typeof JT_SERVER_EVENTS];
+
+// ---------------------------------------------------------------------------
+// Jack-Thief event payload types
+// ---------------------------------------------------------------------------
+
+export interface JtGameEndedPayload {
+  loser: string | null;
+  winners: string[];
+  /** Coin delta per player ID: +100 win, -200 lose. */
+  coinDeltas: Record<string, number>;
+  matchId: string;
+}
 
 // ---------------------------------------------------------------------------
 // Event payload types
