@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useGameStore } from "@/store/gameStore";
 import { t } from "@/utils/i18n";
-import { isRed } from "@/utils/cardUtils";
-import { emitJtPickCard, emitJtSelectTarget, emitJtReorderHand } from "@/utils/socketEmitter";
+import { isRed, getRank } from "@/utils/cardUtils";
+import { emitJtPickCard, emitJtSelectTarget, emitJtReorderHand, emitJtDiscardPair } from "@/utils/socketEmitter";
 
 const MAX_PICKS_CONSTRAINT = 3;
 
@@ -48,8 +48,9 @@ export default function PlayingScreen() {
 
   // Drag-rearrange state
   const dragIndexRef = useRef<number | null>(null);
+  // Pair-discard selection
+  const [selectedForDiscard, setSelectedForDiscard] = useState<number | null>(null);
 
-  const bufferCountdown = useCountdown(gameState?.bufferActive ?? false, 10);
   const pickCountdown = useCountdown(gameState?.pickWindowActive ?? false, 20);
 
   if (!room || !gameState) return null;
@@ -80,6 +81,34 @@ export default function PlayingScreen() {
   };
 
   // ---------------------------------------------------------------------------
+  // Pair-discard handler for own hand
+  // ---------------------------------------------------------------------------
+
+  const handleOwnCardClick = (index: number) => {
+    if (!room) return;
+
+    if (selectedForDiscard === null) {
+      setSelectedForDiscard(index);
+      return;
+    }
+
+    if (selectedForDiscard === index) {
+      setSelectedForDiscard(null);
+      return;
+    }
+
+    const cardA = hand[selectedForDiscard];
+    const cardB = hand[index];
+
+    if (getRank(cardA) === getRank(cardB)) {
+      emitJtDiscardPair({ roomId: room.roomId, cards: [cardA, cardB] });
+      setSelectedForDiscard(null);
+    } else {
+      setSelectedForDiscard(index);
+    }
+  };
+
+  // ---------------------------------------------------------------------------
   // Drag-rearrange handlers for own hand
   // ---------------------------------------------------------------------------
 
@@ -92,13 +121,10 @@ export default function PlayingScreen() {
     if (dragIndex === null || dragIndex === dropIndex) return;
     dragIndexRef.current = null;
 
-    // Build new hand by splicing
     const newHand = [...hand];
     const [dragged] = newHand.splice(dragIndex, 1);
     newHand.splice(dropIndex, 0, dragged);
 
-    // Build permutation: cardOrder[newPos] = oldIndex
-    // Track used old-indices to handle duplicate card names correctly
     const remaining = hand.map((c, i) => ({ c, i }));
     const usedSet = new Set<number>();
     const cardOrder = newHand.map((card) => {
@@ -109,6 +135,7 @@ export default function PlayingScreen() {
     });
 
     setHand(newHand);
+    setSelectedForDiscard(null);
     if (room) emitJtReorderHand({ roomId: room.roomId, cardOrder });
   };
 
@@ -125,29 +152,23 @@ export default function PlayingScreen() {
         {/* Turn indicator */}
         <div className="text-center bg-surface border border-border rounded-xl px-4 py-3">
           {isSelfPicker && !gameState.targetPlayerId ? (
-            <p className="text-sm font-semibold text-primary">Your turn — select a player to pick from</p>
-          ) : isSelfPicker && gameState.bufferActive ? (
-            <p className="text-sm font-semibold text-warning">
-              Picking from <span className="font-bold">{targetName}</span> — buffer {bufferCountdown}s
+            <p className="text-sm font-semibold text-primary">
+              Your turn — select a player to pick from ({pickCountdown}s)
             </p>
-          ) : isSelfPicker && gameState.pickWindowActive ? (
+          ) : isSelfPicker && gameState.targetPlayerId ? (
             <p className="text-sm font-semibold text-primary">
               Pick a card from <span className="font-bold">{targetName}</span> — {pickCountdown}s left
             </p>
-          ) : isSelfTarget && gameState.bufferActive ? (
-            <p className="text-sm font-semibold text-warning">
-              <span className="font-bold">{currentPickerName}</span> is targeting you — {bufferCountdown}s before pick
-            </p>
           ) : isSelfTarget && gameState.pickWindowActive ? (
-            <p className="text-sm font-semibold text-danger">
-              <span className="font-bold">{currentPickerName}</span> is picking from you — {pickCountdown}s
+            <p className="text-sm font-semibold text-warning">
+              <span className="font-bold">{currentPickerName}</span> is targeting you — {pickCountdown}s
             </p>
           ) : isSelfWinner ? (
             <p className="text-sm text-success font-semibold">You won! Spectating...</p>
           ) : (
             <p className="text-sm text-muted">
               {targetName
-                ? `${currentPickerName} picking from ${targetName}${gameState.bufferActive ? ` (${bufferCountdown}s)` : gameState.pickWindowActive ? ` (${pickCountdown}s)` : ""}`
+                ? `${currentPickerName} picking from ${targetName}${gameState.pickWindowActive ? ` (${pickCountdown}s)` : ""}`
                 : `${currentPickerName}'s turn`}
             </p>
           )}
@@ -186,18 +207,16 @@ export default function PlayingScreen() {
               const picksFromP = selfId ? (gameState.pickCounts[selfId]?.[p.id] ?? 0) : 0;
               const constraintBlocked = constraintActive && picksFromP >= MAX_PICKS_CONSTRAINT;
 
-              // Can the self picker select this player as target?
               const canSelectAsTarget =
                 isSelfPicker &&
                 isActive &&
                 handCount > 0 &&
                 gameState.targetPlayerId === null &&
-                !constraintBlocked;
+                !constraintBlocked &&
+                gameState.pickWindowActive;
 
-              // Can the self picker click individual cards (pick window open, this is the target)?
               const canPickCards = isSelfPicker && isThisTarget && gameState.pickWindowActive;
 
-              // Border styling
               let borderClass = "border-border";
               if (isThisTarget) borderClass = "border-warning";
               if (canSelectAsTarget) borderClass = "border-primary/50";
@@ -257,7 +276,7 @@ export default function PlayingScreen() {
                             "flex items-center justify-center",
                             canPickCards
                               ? "border-primary bg-primary/20 hover:bg-primary/40 hover:scale-105 cursor-pointer"
-                              : isThisTarget && gameState.bufferActive
+                              : isThisTarget
                               ? "border-warning/60 bg-warning/10 cursor-not-allowed"
                               : "border-border bg-surface opacity-50 cursor-not-allowed",
                           ].join(" ")}
@@ -279,8 +298,11 @@ export default function PlayingScreen() {
             <span className="text-xs text-muted font-medium uppercase tracking-wide">
               {t("playing.your_hand")} ({hand.length})
             </span>
-            {canSelfReorder && hand.length > 1 && (
-              <span className="text-xs text-muted italic">Drag to rearrange</span>
+            {selectedForDiscard !== null && (
+              <span className="text-xs text-primary font-medium">Select matching rank to discard</span>
+            )}
+            {canSelfReorder && hand.length > 1 && selectedForDiscard === null && (
+              <span className="text-xs text-muted italic">Drag to rearrange · tap pair to discard</span>
             )}
             {isSelfTarget && gameState.pickWindowActive && (
               <span className="text-xs text-danger font-medium">Rearranging locked</span>
@@ -293,23 +315,30 @@ export default function PlayingScreen() {
             </p>
           ) : (
             <div className="flex flex-wrap gap-2">
-              {hand.map((card, i) => (
-                <div
-                  key={i}
-                  draggable={canSelfReorder}
-                  onDragStart={() => canSelfReorder && onDragStart(i)}
-                  onDragOver={(e) => { e.preventDefault(); }}
-                  onDrop={() => canSelfReorder && onDrop(i)}
-                  className={[
-                    "px-3 py-2 rounded-lg border border-border bg-surface",
-                    "text-sm font-semibold font-mono select-none",
-                    isRed(card) ? "text-red-500" : "text-foreground",
-                    canSelfReorder ? "cursor-grab active:cursor-grabbing hover:border-primary/50" : "",
-                  ].join(" ")}
-                >
-                  {card}
-                </div>
-              ))}
+              {hand.map((card, i) => {
+                const red = isRed(card);
+                const isSelected = selectedForDiscard === i;
+                return (
+                  <div
+                    key={i}
+                    draggable={canSelfReorder}
+                    onDragStart={() => canSelfReorder && onDragStart(i)}
+                    onDragOver={(e) => { e.preventDefault(); }}
+                    onDrop={() => canSelfReorder && onDrop(i)}
+                    onClick={() => handleOwnCardClick(i)}
+                    className={[
+                      "px-3 py-2 rounded-lg border text-sm font-semibold font-mono select-none transition-all",
+                      red ? "text-red-500" : "text-foreground",
+                      isSelected
+                        ? "border-primary ring-2 ring-primary bg-primary/10 scale-105 cursor-pointer"
+                        : "border-border bg-surface hover:border-primary/60 cursor-pointer",
+                      canSelfReorder ? "cursor-grab active:cursor-grabbing" : "",
+                    ].join(" ")}
+                  >
+                    {card}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>

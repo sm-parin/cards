@@ -133,7 +133,6 @@ export function useSocket(): void {
         duration,
         currentPickerId,
         targetPlayerId: null,
-        bufferActive: false,
         pickWindowActive: false,
       });
     };
@@ -210,13 +209,12 @@ export function useSocket(): void {
         duration: payload.duration,
         currentPickerId: payload.currentPickerId,
         targetPlayerId: payload.targetPlayerId,
-        bufferActive: payload.bufferActive,
         pickWindowActive: payload.pickWindowActive,
       });
     };
 
     /**
-     * JT_TARGET_SELECTED — active picker locked in a target; 10-sec buffer starts.
+     * JT_TARGET_SELECTED — active picker locked in a target. No buffer — pick window already open.
      */
     const onJtTargetSelected = ({ currentPickerId, targetPlayerId }: JtTargetSelectedPayload) => {
       setTargetSelected(currentPickerId, targetPlayerId);
