@@ -59,6 +59,15 @@ interface GameStoreActions {
   /** Replace public handSizes map */
   setHandSizes: (handSizes: Record<string, number>) => void;
 
+  /** Update turn info after a pick or turn-pass */
+  setTurnUpdate: (currentPickerId: string | null, targetPlayerId: string | null) => void;
+
+  /** Set target selected + start buffer flag */
+  setTargetSelected: (currentPickerId: string, targetPlayerId: string) => void;
+
+  /** Pick window opened (buffer expired) */
+  setPickWindowActive: (active: boolean) => void;
+
   /** Replace this player's private hand */
   setHand: (hand: Card[]) => void;
 
@@ -142,6 +151,24 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const gs = get().gameState;
     if (!gs) return;
     set({ gameState: { ...gs, handSizes } });
+  },
+
+  setTurnUpdate: (currentPickerId, targetPlayerId) => {
+    const gs = get().gameState;
+    if (!gs) return;
+    set({ gameState: { ...gs, currentPickerId, targetPlayerId, bufferActive: false, pickWindowActive: false } });
+  },
+
+  setTargetSelected: (currentPickerId, targetPlayerId) => {
+    const gs = get().gameState;
+    if (!gs) return;
+    set({ gameState: { ...gs, currentPickerId, targetPlayerId, bufferActive: true, pickWindowActive: false } });
+  },
+
+  setPickWindowActive: (active) => {
+    const gs = get().gameState;
+    if (!gs) return;
+    set({ gameState: { ...gs, bufferActive: false, pickWindowActive: active } });
   },
 
   setHand: (hand) => set({ hand }),

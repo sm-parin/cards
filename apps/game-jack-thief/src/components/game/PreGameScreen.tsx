@@ -1,20 +1,22 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useGameStore } from "@/store/gameStore";
 import { t } from "@/utils/i18n";
 import { getRank, isRed } from "@/utils/cardUtils";
-import { emitJtDiscardPair } from "@/utils/socketEmitter";
+import { emitJtDiscardPair, emitJtReorderHand } from "@/utils/socketEmitter";
 import type { Card } from "@/types";
 
 export default function PreGameScreen() {
   const room = useGameStore((s) => s.room);
   const gameState = useGameStore((s) => s.gameState);
   const hand = useGameStore((s) => s.hand);
+  const setHand = useGameStore((s) => s.setHand);
   const gameNotification = useGameStore((s) => s.gameNotification);
 
   const [timeLeft, setTimeLeft] = useState<number>(gameState?.duration ?? 40);
   const [selected, setSelected] = useState<number | null>(null);
+  const dragIndexRef = useRef<number | null>(null);
 
   // Countdown timer
   useEffect(() => {
@@ -46,6 +48,27 @@ export default function PreGameScreen() {
       // Different rank — replace selection
       setSelected(index);
     }
+  };
+
+  const handleCardDrop = (dropIndex: number) => {
+    const dragIndex = dragIndexRef.current;
+    if (dragIndex === null || dragIndex === dropIndex) return;
+    dragIndexRef.current = null;
+    const newHand = [...hand];
+    const [dragged] = newHand.splice(dragIndex, 1);
+    newHand.splice(dropIndex, 0, dragged);
+    // Build permutation tracking duplicates
+    const remaining = hand.map((c, i) => ({ c, i }));
+    const usedSet = new Set<number>();
+    const cardOrder = newHand.map((card) => {
+      const match = remaining.find(({ c, i }) => c === card && !usedSet.has(i));
+      if (!match) return 0;
+      usedSet.add(match.i);
+      return match.i;
+    });
+    setHand(newHand);
+    setSelected(null);
+    if (room) emitJtReorderHand({ roomId: room.roomId, cardOrder });
   };
 
   if (!gameState) return null;
@@ -99,9 +122,14 @@ export default function PreGameScreen() {
                   return (
                     <button
                       key={i}
+                      draggable
+                      onDragStart={() => { dragIndexRef.current = i; }}
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={() => handleCardDrop(i)}
                       onClick={() => handleCardClick(card, i)}
                       className={[
                         "px-3 py-2 rounded-lg border text-sm font-semibold font-mono transition-all",
+                        "cursor-grab active:cursor-grabbing",
                         red ? "text-red-500" : "text-foreground",
                         isSelected
                           ? "border-primary ring-2 ring-primary bg-primary/10 scale-105"

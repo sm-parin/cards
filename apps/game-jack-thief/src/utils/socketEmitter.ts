@@ -10,7 +10,9 @@ import { JT_CLIENT_EVENTS, CLIENT_EVENTS } from "@/config/events";
 import type {
   JtStartGamePayload,
   JtDiscardPairPayload,
+  JtSelectTargetPayload,
   JtPickCardPayload,
+  JtReorderHandPayload,
 } from "@/types";
 
 const TOKEN_KEY = "jt_token";
@@ -88,4 +90,12 @@ export const emitJtDiscardPair = (payload: JtDiscardPairPayload): void => {
 
 export const emitJtPickCard = (payload: JtPickCardPayload): void => {
   socketInstance.emit(JT_CLIENT_EVENTS.JT_PICK_CARD, payload);
+};
+
+export const emitJtSelectTarget = (payload: JtSelectTargetPayload): void => {
+  socketInstance.emit(JT_CLIENT_EVENTS.JT_SELECT_TARGET, payload);
+};
+
+export const emitJtReorderHand = (payload: JtReorderHandPayload): void => {
+  socketInstance.emit(JT_CLIENT_EVENTS.JT_REORDER_HAND, payload);
 };

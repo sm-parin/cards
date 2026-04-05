@@ -95,20 +95,25 @@ const JT_EVENTS = {
   // Inbound (client → server)
   JT_START_GAME:    'JT_START_GAME',
   JT_DISCARD_PAIR:  'JT_DISCARD_PAIR',
+  JT_SELECT_TARGET: 'JT_SELECT_TARGET',  // active player selects who to pick from
   JT_PICK_CARD:     'JT_PICK_CARD',
+  JT_REORDER_HAND:  'JT_REORDER_HAND',   // player reorders their own cards
 
   // Outbound (server → client)
-  JT_GAME_STARTED:   'JT_GAME_STARTED',
-  JT_PLAYER_HAND:    'JT_PLAYER_HAND',
-  JT_PRE_GAME_STARTED: 'JT_PRE_GAME_STARTED',
-  JT_PAIR_DISCARDED: 'JT_PAIR_DISCARDED',
-  JT_PRE_GAME_ENDED: 'JT_PRE_GAME_ENDED',
-  JT_CARD_PICKED:    'JT_CARD_PICKED',
-  JT_HAND_UPDATE:    'JT_HAND_UPDATE',
-  JT_PLAYER_WON:     'JT_PLAYER_WON',
-  JT_GAME_ENDED:     'JT_GAME_ENDED',
-  JT_GAME_STATE:     'JT_GAME_STATE',
-  JT_ERROR:          'JT_ERROR',
+  JT_GAME_STARTED:    'JT_GAME_STARTED',
+  JT_PLAYER_HAND:     'JT_PLAYER_HAND',
+  JT_PRE_GAME_STARTED:'JT_PRE_GAME_STARTED',
+  JT_PAIR_DISCARDED:  'JT_PAIR_DISCARDED',
+  JT_PRE_GAME_ENDED:  'JT_PRE_GAME_ENDED',
+  JT_TARGET_SELECTED: 'JT_TARGET_SELECTED', // target locked in, buffer starts
+  JT_PICK_TIMER_START:'JT_PICK_TIMER_START', // buffer done, 20-sec pick window opens
+  JT_CARD_PICKED:     'JT_CARD_PICKED',
+  JT_HAND_UPDATE:     'JT_HAND_UPDATE',
+  JT_TURN_UPDATE:     'JT_TURN_UPDATE',      // whose turn it is after a pick
+  JT_PLAYER_WON:      'JT_PLAYER_WON',
+  JT_GAME_ENDED:      'JT_GAME_ENDED',
+  JT_GAME_STATE:      'JT_GAME_STATE',
+  JT_ERROR:           'JT_ERROR',
 };
 
 /**
@@ -123,6 +128,10 @@ const JT_RULES = {
   MAX_PLAYERS: 13,
   /** Pre-game pair-discard phase duration in milliseconds */
   PRE_GAME_DURATION_MS: 40_000,
+  /** Buffer after target selected before pick window opens (ms) */
+  SELECT_TARGET_BUFFER_MS: 10_000,
+  /** Duration of the pick window (ms) — after buffer, before auto-pass */
+  PICK_CARD_DURATION_MS: 20_000,
   /** Coins awarded to winners */
   WIN_COINS: 100,
   /** Coins deducted from the loser */

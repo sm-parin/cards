@@ -133,6 +133,31 @@ function discardAllPairs(hand) {
   };
 }
 
+/**
+ * Validates a target selection request. Returns an error string or null if valid.
+ * Called from JT_SELECT_TARGET, before the pick window opens.
+ *
+ * @param {object} state
+ * @param {string} pickerId
+ * @param {string} targetPlayerId
+ * @returns {string|null}
+ */
+function validatePickTarget(state, pickerId, targetPlayerId) {
+  if (!state.activePlayers.includes(targetPlayerId)) return 'That player is not active';
+  if (targetPlayerId === pickerId) return 'Cannot pick from yourself';
+  if (!state.hands[targetPlayerId] || state.hands[targetPlayerId].length === 0) {
+    return 'That player has no cards';
+  }
+  // Pick-count constraint
+  if (state.activePlayers.length > JT_RULES.MAX_PICKS_FROM_SAME) {
+    const count = (state.pickCounts[pickerId] || {})[targetPlayerId] || 0;
+    if (count >= JT_RULES.MAX_PICKS_FROM_SAME) {
+      return `You have already picked from this player ${JT_RULES.MAX_PICKS_FROM_SAME} times`;
+    }
+  }
+  return null;
+}
+
 // ---------------------------------------------------------------------------
 // Pick validation
 // ---------------------------------------------------------------------------
@@ -249,6 +274,7 @@ module.exports = {
   dealCards,
   findPairs,
   discardAllPairs,
+  validatePickTarget,
   validatePick,
   resolvePick,
   checkNewWinners,

@@ -38,6 +38,14 @@ export interface JtGameState {
   pickCounts: Record<string, Record<string, number>>;
   /** Original pre-game duration in seconds */
   duration: number;
+  /** Who is currently the active picker */
+  currentPickerId: string | null;
+  /** Who has been selected as the pick target (after JT_SELECT_TARGET) */
+  targetPlayerId: string | null;
+  /** True while 10-sec buffer is running */
+  bufferActive: boolean;
+  /** True while 20-sec pick window is open */
+  pickWindowActive: boolean;
   /** Coin deltas — available after game ends */
   coinDeltas?: Record<string, number>;
   matchId?: string;
@@ -68,6 +76,7 @@ export interface JtGameStartedPayload {
   handSizes: Record<string, number>;
   deckCount: 1 | 2;
   duration: number;
+  currentPickerId: string;
 }
 
 export interface JtPlayerHandPayload {
@@ -76,6 +85,22 @@ export interface JtPlayerHandPayload {
 
 export interface JtPreGameEndedPayload {
   handSizes: Record<string, number>;
+  currentPickerId: string | null;
+}
+
+export interface JtTargetSelectedPayload {
+  currentPickerId: string;
+  targetPlayerId: string;
+  bufferDuration: number;
+}
+
+export interface JtPickTimerStartPayload {
+  duration: number;
+}
+
+export interface JtTurnUpdatePayload {
+  currentPickerId: string | null;
+  targetPlayerId: string | null;
 }
 
 export interface JtPairDiscardedPayload {
@@ -117,6 +142,10 @@ export interface JtGameStatePayload {
   activePlayers: string[];
   pickCounts: Record<string, Record<string, number>>;
   duration: number;
+  currentPickerId: string | null;
+  targetPlayerId: string | null;
+  bufferActive: boolean;
+  pickWindowActive: boolean;
 }
 
 export interface JtErrorPayload {
@@ -173,4 +202,14 @@ export interface JtPickCardPayload {
   roomId: string;
   fromPlayerId: string;
   cardIndex: number;
+}
+
+export interface JtSelectTargetPayload {
+  roomId: string;
+  targetPlayerId: string;
+}
+
+export interface JtReorderHandPayload {
+  roomId: string;
+  cardOrder: number[];
 }
