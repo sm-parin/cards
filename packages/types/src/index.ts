@@ -39,8 +39,12 @@ export type GamePhase =
 
 export interface PlatformUser {
   id: string;
+  /** Computed display name: nickname ?? email.split('@')[0] */
   username: string;
   coins: number;
+  email?: string;
+  nickname?: string | null;
+  bio?: string | null;
 }
 
 /**

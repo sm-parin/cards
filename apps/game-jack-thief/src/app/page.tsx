@@ -33,7 +33,7 @@ function PageContent() {
       try {
         const base64 = token.split('.')[1];
         const payload = JSON.parse(atob(base64.replace(/-/g, '+').replace(/_/g, '/')));
-        setAuthUser({ id: payload.userId, username: payload.username, coins: 0 });
+        setAuthUser({ id: payload.userId, username: payload.username, email: payload.email, nickname: payload.nickname ?? null, coins: 0 });
       } catch {
         // Malformed token — play as guest
         setAuthUser({ id: '', username: 'Guest', coins: 0 });

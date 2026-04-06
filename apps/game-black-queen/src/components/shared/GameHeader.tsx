@@ -38,7 +38,7 @@ export default function GameHeader() {
         ) : (
           <>
             <span style={{ fontSize: '14px', color: '#9ca3af' }}>{authUser.coins} coins</span>
-            <span style={{ fontSize: '14px', color: '#fff' }}>{authUser.username}</span>
+            <span style={{ fontSize: '14px', color: '#fff' }}>{authUser.nickname ?? authUser.email?.split('@')[0] ?? authUser.username}</span>
             <button
               onClick={handleLogout}
               style={{

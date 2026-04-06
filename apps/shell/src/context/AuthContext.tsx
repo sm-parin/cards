@@ -55,7 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!payload) return;
     // Optimistically set from JWT so UI shows instantly
     setToken(stored);
-    setUser({ id: payload.userId, username: payload.username, coins: 0 });
+    setUser({ id: payload.userId, username: payload.username, email: payload.email, nickname: payload.nickname ?? null, coins: 0 });
     // Then fetch fresh coins from server
     const fresh = await fetchFreshUser(stored);
     if (fresh) setUser(fresh);

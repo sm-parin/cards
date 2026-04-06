@@ -1,6 +1,8 @@
 'use client';
+import Link from 'next/link';
 import { useAuth } from '../context/AuthContext';
 import { useRouter } from 'next/navigation';
+import AvatarCircle from './AvatarCircle';
 
 export default function Header() {
   const { user, logout } = useAuth();
@@ -18,7 +20,13 @@ export default function Header() {
         {user ? (
           <>
             <span className="text-sm text-gray-400">{user.coins} coins</span>
-            <span className="text-sm text-white">{user.username}</span>
+            <Link href="/profile">
+              <AvatarCircle
+                userId={user.id}
+                displayName={user.nickname ?? user.email?.split('@')[0] ?? user.username}
+                size={32}
+              />
+            </Link>
             <button
               onClick={handleLogout}
               className="text-sm text-gray-500 hover:text-gray-300 transition-colors"
@@ -27,12 +35,12 @@ export default function Header() {
             </button>
           </>
         ) : (
-          <button
-            onClick={() => router.push('/login')}
+          <Link
+            href="/login"
             className="text-sm text-gray-300 hover:text-white transition-colors"
           >
             Login
-          </button>
+          </Link>
         )}
       </div>
     </header>

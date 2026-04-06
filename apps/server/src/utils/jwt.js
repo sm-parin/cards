@@ -7,12 +7,17 @@ const EXPIRES_IN = '7d';
 
 /**
  * Issue a signed JWT for a user.
- * @param {{ id: string, username: string }} user
+ * @param {{ id: string, username: string, email: string, nickname?: string|null }} user
  * @returns {string} token
  */
 function signToken(user) {
   return jwt.sign(
-    { userId: user.id, username: user.username },
+    {
+      userId: user.id,
+      username: user.username,
+      email: user.email || null,
+      nickname: user.nickname || null,
+    },
     SECRET,
     { expiresIn: EXPIRES_IN }
   );

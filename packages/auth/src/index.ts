@@ -4,8 +4,12 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL
 
 export interface AuthUser {
   id: string;
+  /** Computed display name: nickname ?? email.split('@')[0] */
   username: string;
   coins: number;
+  email?: string;
+  nickname?: string | null;
+  bio?: string | null;
 }
 
 export interface AuthResponse {
@@ -14,13 +18,14 @@ export interface AuthResponse {
 }
 
 export async function register(
-  username: string,
-  password: string
+  email: string,
+  password: string,
+  nickname?: string
 ): Promise<AuthResponse> {
   const res = await fetch(`${API_URL}/auth/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, password }),
+    body: JSON.stringify({ email, password, nickname }),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'Registration failed');
@@ -28,16 +33,33 @@ export async function register(
 }
 
 export async function login(
-  username: string,
+  email: string,
   password: string
 ): Promise<AuthResponse> {
   const res = await fetch(`${API_URL}/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, password }),
+    body: JSON.stringify({ email, password }),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'Login failed');
+  return data;
+}
+
+export async function updateProfile(
+  token: string,
+  profile: { nickname?: string | null; bio?: string | null }
+): Promise<{ user: AuthUser; token: string }> {
+  const res = await fetch(`${API_URL}/auth/profile`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(profile),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Profile update failed');
   return data;
 }
 
@@ -63,6 +85,8 @@ export function clearShellToken(): void {
 export interface TokenPayload {
   userId: string;
   username: string;
+  email: string;
+  nickname: string | null;
   iat: number;
   exp: number;
 }

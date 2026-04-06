@@ -2,14 +2,21 @@
 
 const { query } = require('./postgres');
 
-const SQL = `
+// CREATE TABLE for fresh installs — email-based auth, nickname, bio.
+// username is the computed display name (no UNIQUE constraint).
+const SQL_CREATE = `
 CREATE TABLE IF NOT EXISTS users (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  username    TEXT UNIQUE NOT NULL,
+  email       TEXT,
+  username    TEXT,
+  nickname    TEXT,
+  bio         TEXT,
   password    TEXT NOT NULL,
   coins       INTEGER NOT NULL DEFAULT 1000,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS users_email_unique ON users (email) WHERE email IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS matches (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -37,8 +44,29 @@ CREATE TABLE IF NOT EXISTS coin_transactions (
 );
 `;
 
+// ALTER TABLE for existing installs — adds new columns and relaxes old constraints.
+// All operations are idempotent (safe to re-run on every server start).
+const SQL_ALTER = `
+ALTER TABLE users ADD COLUMN IF NOT EXISTS email    TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS nickname TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS bio      TEXT;
+
+CREATE UNIQUE INDEX IF NOT EXISTS users_email_unique ON users (email) WHERE email IS NOT NULL;
+
+DO $$ BEGIN
+  ALTER TABLE users ALTER COLUMN username DROP NOT NULL;
+EXCEPTION WHEN OTHERS THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  ALTER TABLE users DROP CONSTRAINT users_username_key;
+EXCEPTION WHEN OTHERS THEN NULL;
+END $$;
+`;
+
 async function runMigrations() {
-  await query(SQL);
+  await query(SQL_CREATE);
+  await query(SQL_ALTER);
   console.log('Migrations complete');
 }
 
