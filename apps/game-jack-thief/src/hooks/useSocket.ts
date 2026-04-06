@@ -196,6 +196,10 @@ export function useSocket(): void {
      */
     const onJtGameEnded = ({ loser, winners, coinDeltas, matchId }: JtGameEndedPayload) => {
       setGameEnded(loser, winners, coinDeltas, matchId);
+      const authUser = useGameStore.getState().authUser;
+      if (authUser && typeof coinDeltas[authUser.id] === 'number') {
+        useGameStore.getState().setAuthUser({ ...authUser, coins: authUser.coins + coinDeltas[authUser.id] });
+      }
     };
 
     /**
