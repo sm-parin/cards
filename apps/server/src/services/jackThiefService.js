@@ -209,24 +209,13 @@ function resolvePick(state, pickerId, fromPlayerId, cardIndex) {
   const card = fromHand.splice(idx, 1)[0];
   const cardRank = getRank(card);
 
-  // Check if the picked card pairs with anything already in picker's hand
+  // Always add picked card to picker's hand — no auto-discard
+  // Players must manually tap two same-rank cards to discard a pair
   const pickerHand = state.hands[pickerId];
-  const matchIdx = pickerHand.findIndex((c) => getRank(c) === cardRank);
+  pickerHand.push(card);
 
-  let paired = false;
-  let discardedPair = null;
-
-  if (matchIdx !== -1) {
-    // Pair found — discard both
-    const pairCard = pickerHand[matchIdx];
-    pickerHand.splice(matchIdx, 1);
-    paired = true;
-    discardedPair = [pairCard, card];
-    // card is NOT added to pickerHand (both discarded)
-  } else {
-    // No pair — add card to picker's hand
-    pickerHand.push(card);
-  }
+  const paired = false;
+  const discardedPair = null;
 
   // Update pick-count tracking
   if (!state.pickCounts[pickerId]) state.pickCounts[pickerId] = {};

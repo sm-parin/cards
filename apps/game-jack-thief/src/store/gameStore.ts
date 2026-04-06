@@ -68,6 +68,9 @@ interface GameStoreActions {
   /** Pick window opened (buffer expired) */
   setPickWindowActive: (active: boolean) => void;
 
+  /** Player-selection timer started/stopped */
+  setSelectPlayerActive: (active: boolean) => void;
+
   /** Replace this player's private hand */
   setHand: (hand: Card[]) => void;
 
@@ -156,19 +159,25 @@ export const useGameStore = create<GameStore>((set, get) => ({
   setTurnUpdate: (currentPickerId, targetPlayerId) => {
     const gs = get().gameState;
     if (!gs) return;
-    set({ gameState: { ...gs, currentPickerId, targetPlayerId, bufferActive: false, pickWindowActive: false } });
+    set({ gameState: { ...gs, currentPickerId, targetPlayerId, selectPlayerActive: false, bufferActive: false, pickWindowActive: false } });
   },
 
   setTargetSelected: (currentPickerId, targetPlayerId) => {
     const gs = get().gameState;
     if (!gs) return;
-    set({ gameState: { ...gs, currentPickerId, targetPlayerId, bufferActive: true, pickWindowActive: false } });
+    set({ gameState: { ...gs, currentPickerId, targetPlayerId, selectPlayerActive: false, bufferActive: true, pickWindowActive: false } });
   },
 
   setPickWindowActive: (active) => {
     const gs = get().gameState;
     if (!gs) return;
     set({ gameState: { ...gs, bufferActive: false, pickWindowActive: active } });
+  },
+
+  setSelectPlayerActive: (active) => {
+    const gs = get().gameState;
+    if (!gs) return;
+    set({ gameState: { ...gs, selectPlayerActive: active } });
   },
 
   setHand: (hand) => set({ hand }),

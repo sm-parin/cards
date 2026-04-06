@@ -106,7 +106,8 @@ const JT_EVENTS = {
   JT_PAIR_DISCARDED:  'JT_PAIR_DISCARDED',
   JT_PRE_GAME_ENDED:  'JT_PRE_GAME_ENDED',
   JT_TARGET_SELECTED: 'JT_TARGET_SELECTED', // target locked in, buffer starts
-  JT_PICK_TIMER_START:'JT_PICK_TIMER_START', // buffer done, 20-sec pick window opens
+  JT_SELECT_PLAYER_TIMER_START: 'JT_SELECT_PLAYER_TIMER_START', // 10s to choose a player
+  JT_PICK_TIMER_START:'JT_PICK_TIMER_START', // buffer done, pick window opens
   JT_CARD_PICKED:     'JT_CARD_PICKED',
   JT_HAND_UPDATE:     'JT_HAND_UPDATE',
   JT_TURN_UPDATE:     'JT_TURN_UPDATE',      // whose turn it is after a pick
@@ -128,10 +129,12 @@ const JT_RULES = {
   MAX_PLAYERS: 13,
   /** Pre-game pair-discard phase duration in milliseconds */
   PRE_GAME_DURATION_MS: 40_000,
-  /** Buffer after target selected before pick window opens (ms) */
-  SELECT_TARGET_BUFFER_MS: 10_000,
-  /** Duration of the pick window (ms) — after buffer, before auto-pass */
-  PICK_CARD_DURATION_MS: 20_000,
+  /** Time for active player to select a target (auto-selects random if expired) */
+  SELECT_PLAYER_DURATION_MS: 10_000,
+  /** Buffer after target is selected before pick window opens (ms) */
+  SELECT_TARGET_BUFFER_MS: 5_000,
+  /** Duration of the pick window (ms) — skips pick on expiry */
+  PICK_CARD_DURATION_MS: 10_000,
   /** Coins awarded to winners */
   WIN_COINS: 100,
   /** Coins deducted from the loser */

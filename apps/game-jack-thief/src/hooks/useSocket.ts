@@ -35,6 +35,7 @@ import type {
   JtGameStatePayload,
   JtTargetSelectedPayload,
   JtPickTimerStartPayload,
+  JtSelectPlayerTimerStartPayload,
   JtTurnUpdatePayload,
   JtErrorPayload,
   JtPlayer,
@@ -54,6 +55,7 @@ export function useSocket(): void {
     setTurnUpdate,
     setTargetSelected,
     setPickWindowActive,
+    setSelectPlayerActive,
     setHand,
     removePairFromHand,
     addWinner,
@@ -133,6 +135,7 @@ export function useSocket(): void {
         duration,
         currentPickerId,
         targetPlayerId: null,
+        selectPlayerActive: false,
         bufferActive: false,
         pickWindowActive: false,
       });
@@ -210,16 +213,24 @@ export function useSocket(): void {
         duration: payload.duration,
         currentPickerId: payload.currentPickerId,
         targetPlayerId: payload.targetPlayerId,
+        selectPlayerActive: payload.selectPlayerActive,
         bufferActive: payload.bufferActive,
         pickWindowActive: payload.pickWindowActive,
       });
     };
 
     /**
-     * JT_TARGET_SELECTED — active picker locked in a target; 10-sec buffer starts.
+     * JT_TARGET_SELECTED — active picker locked in a target; 5-sec buffer starts.
      */
     const onJtTargetSelected = ({ currentPickerId, targetPlayerId }: JtTargetSelectedPayload) => {
       setTargetSelected(currentPickerId, targetPlayerId);
+    };
+
+    /**
+     * JT_SELECT_PLAYER_TIMER_START — picker has 10s to choose a target player.
+     */
+    const onJtSelectPlayerTimerStart = (_payload: JtSelectPlayerTimerStartPayload) => {
+      setSelectPlayerActive(true);
     };
 
     /**
@@ -255,6 +266,7 @@ export function useSocket(): void {
     socketInstance.on(JT_SERVER_EVENTS.JT_PAIR_DISCARDED, onJtPairDiscarded);
     socketInstance.on(JT_SERVER_EVENTS.JT_PRE_GAME_ENDED, onJtPreGameEnded);
     socketInstance.on(JT_SERVER_EVENTS.JT_TARGET_SELECTED, onJtTargetSelected);
+    socketInstance.on(JT_SERVER_EVENTS.JT_SELECT_PLAYER_TIMER_START, onJtSelectPlayerTimerStart);
     socketInstance.on(JT_SERVER_EVENTS.JT_PICK_TIMER_START, onJtPickTimerStart);
     socketInstance.on(JT_SERVER_EVENTS.JT_CARD_PICKED, onJtCardPicked);
     socketInstance.on(JT_SERVER_EVENTS.JT_HAND_UPDATE, onJtHandUpdate);
@@ -277,6 +289,7 @@ export function useSocket(): void {
       socketInstance.off(JT_SERVER_EVENTS.JT_PAIR_DISCARDED, onJtPairDiscarded);
       socketInstance.off(JT_SERVER_EVENTS.JT_PRE_GAME_ENDED, onJtPreGameEnded);
       socketInstance.off(JT_SERVER_EVENTS.JT_TARGET_SELECTED, onJtTargetSelected);
+      socketInstance.off(JT_SERVER_EVENTS.JT_SELECT_PLAYER_TIMER_START, onJtSelectPlayerTimerStart);
       socketInstance.off(JT_SERVER_EVENTS.JT_PICK_TIMER_START, onJtPickTimerStart);
       socketInstance.off(JT_SERVER_EVENTS.JT_CARD_PICKED, onJtCardPicked);
       socketInstance.off(JT_SERVER_EVENTS.JT_HAND_UPDATE, onJtHandUpdate);

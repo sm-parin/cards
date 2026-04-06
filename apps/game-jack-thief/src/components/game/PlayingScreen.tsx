@@ -51,8 +51,9 @@ export default function PlayingScreen() {
   // Pair-discard selection
   const [selectedForDiscard, setSelectedForDiscard] = useState<number | null>(null);
 
-  const bufferCountdown = useCountdown(gameState?.bufferActive ?? false, 10);
-  const pickCountdown = useCountdown(gameState?.pickWindowActive ?? false, 20);
+  const selectPlayerCountdown = useCountdown(gameState?.selectPlayerActive ?? false, 10);
+  const bufferCountdown = useCountdown(gameState?.bufferActive ?? false, 5);
+  const pickCountdown = useCountdown(gameState?.pickWindowActive ?? false, 10);
 
   if (!room || !gameState) return null;
 
@@ -72,6 +73,7 @@ export default function PlayingScreen() {
 
   const handleSelectTarget = (targetPlayerId: string) => {
     if (!room || !isSelfPicker || gameState.targetPlayerId !== null) return;
+    if (!gameState.selectPlayerActive) return; // phase 1 window must be open
     emitJtSelectTarget({ roomId: room.roomId, targetPlayerId });
   };
 
@@ -85,8 +87,10 @@ export default function PlayingScreen() {
   // Pair-discard handler for own hand (allowed in both pre-game and playing)
   // ---------------------------------------------------------------------------
 
+  const canDiscard = !(isSelfTarget && gameState.pickWindowActive);
+
   const handleOwnCardClick = (index: number) => {
-    if (!room) return;
+    if (!room || !canDiscard) return;
 
     if (selectedForDiscard === null) {
       setSelectedForDiscard(index);
@@ -152,8 +156,10 @@ export default function PlayingScreen() {
 
         {/* Turn indicator */}
         <div className="text-center bg-surface border border-border rounded-xl px-4 py-3">
-          {isSelfPicker && !gameState.targetPlayerId ? (
-            <p className="text-sm font-semibold text-primary">Your turn — select a player to pick from</p>
+          {isSelfPicker && gameState.selectPlayerActive ? (
+            <p className="text-sm font-semibold text-primary">
+              Your turn — select a player ({selectPlayerCountdown}s)
+            </p>
           ) : isSelfPicker && gameState.bufferActive ? (
             <p className="text-sm font-semibold text-warning">
               Picking from <span className="font-bold">{targetName}</span> — buffer {bufferCountdown}s
@@ -176,7 +182,7 @@ export default function PlayingScreen() {
             <p className="text-sm text-muted">
               {targetName
                 ? `${currentPickerName} picking from ${targetName}${gameState.bufferActive ? ` (${bufferCountdown}s)` : gameState.pickWindowActive ? ` (${pickCountdown}s)` : ""}`
-                : `${currentPickerName}'s turn`}
+                : `${currentPickerName}'s turn${gameState.selectPlayerActive ? ` (${selectPlayerCountdown}s)` : ""}`}
             </p>
           )}
         </div>
@@ -219,6 +225,7 @@ export default function PlayingScreen() {
                 isActive &&
                 handCount > 0 &&
                 gameState.targetPlayerId === null &&
+                gameState.selectPlayerActive &&
                 !constraintBlocked;
 
               const canPickCards = isSelfPicker && isThisTarget && gameState.pickWindowActive;
@@ -304,14 +311,14 @@ export default function PlayingScreen() {
             <span className="text-xs text-muted font-medium uppercase tracking-wide">
               {t("playing.your_hand")} ({hand.length})
             </span>
-            {selectedForDiscard !== null && (
+            {selectedForDiscard !== null && canDiscard && (
               <span className="text-xs text-primary font-medium">Select matching rank to discard</span>
             )}
-            {canSelfReorder && hand.length > 1 && selectedForDiscard === null && (
+            {canSelfReorder && hand.length > 1 && selectedForDiscard === null && canDiscard && (
               <span className="text-xs text-muted italic">Drag to rearrange · tap pair to discard</span>
             )}
             {isSelfTarget && gameState.pickWindowActive && (
-              <span className="text-xs text-danger font-medium">Rearranging locked</span>
+              <span className="text-xs text-danger font-medium">Rearranging &amp; discard locked</span>
             )}
           </div>
 
@@ -333,12 +340,14 @@ export default function PlayingScreen() {
                     onDrop={() => canSelfReorder && onDrop(i)}
                     onClick={() => handleOwnCardClick(i)}
                     className={[
-                      "px-3 py-2 rounded-lg border text-sm font-semibold font-mono select-none transition-all cursor-pointer",
+                      "px-3 py-2 rounded-lg border text-sm font-semibold font-mono select-none transition-all",
                       red ? "text-red-500" : "text-foreground",
-                      isSelected
-                        ? "border-primary ring-2 ring-primary bg-primary/10 scale-105"
-                        : "border-border bg-surface hover:border-primary/60",
-                      canSelfReorder ? "cursor-grab active:cursor-grabbing" : "",
+                      !canDiscard
+                        ? "border-border bg-surface opacity-50 cursor-not-allowed"
+                        : isSelected
+                        ? "border-primary ring-2 ring-primary bg-primary/10 scale-105 cursor-pointer"
+                        : "border-border bg-surface hover:border-primary/60 cursor-pointer",
+                      canSelfReorder && canDiscard ? "cursor-grab active:cursor-grabbing" : "",
                     ].join(" ")}
                   >
                     {card}
