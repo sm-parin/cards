@@ -13,7 +13,6 @@ export default function ProfilePage() {
   const [nickname, setNickname] = useState('');
   const [bio, setBio] = useState('');
   const [saving, setSaving] = useState(false);
-  const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -35,7 +34,6 @@ export default function ProfilePage() {
     e.preventDefault();
     if (!token) return;
     setError('');
-    setSuccess(false);
     setSaving(true);
     try {
       const result = await updateProfile(token, {
@@ -43,7 +41,7 @@ export default function ProfilePage() {
         bio: bio.trim() || null,
       });
       login(result.token, result.user);
-      setSuccess(true);
+      router.push('/');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Save failed');
     } finally {
@@ -89,7 +87,7 @@ export default function ProfilePage() {
             <input
               type="text"
               value={nickname}
-              onChange={e => { setNickname(e.target.value); setSuccess(false); }}
+              onChange={e => setNickname(e.target.value)}
               maxLength={32}
               placeholder={user.email?.split('@')[0] ?? user.username}
               className="w-full bg-gray-900 border border-gray-800 rounded-lg
@@ -103,7 +101,7 @@ export default function ProfilePage() {
             <label className="block text-sm text-gray-400 mb-1">Bio</label>
             <textarea
               value={bio}
-              onChange={e => { setBio(e.target.value); setSuccess(false); }}
+              onChange={e => setBio(e.target.value)}
               maxLength={280}
               rows={3}
               placeholder="Say something about yourself..."
@@ -115,17 +113,26 @@ export default function ProfilePage() {
           </div>
 
           {error && <p className="text-red-400 text-sm">{error}</p>}
-          {success && <p className="text-green-400 text-sm">Profile saved.</p>}
 
-          <button
-            type="submit"
-            disabled={saving}
-            className="w-full bg-white text-gray-950 rounded-lg py-2 text-sm
-                       font-medium hover:bg-gray-100 transition-colors
-                       disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {saving ? 'Saving...' : 'Save'}
-          </button>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => router.push('/')}
+              className="flex-1 bg-gray-800 text-gray-200 rounded-lg py-2 text-sm
+                         font-medium hover:bg-gray-700 transition-colors"
+            >
+              Back
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="flex-1 bg-white text-gray-950 rounded-lg py-2 text-sm
+                         font-medium hover:bg-gray-100 transition-colors
+                         disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {saving ? 'Saving...' : 'Save'}
+            </button>
+          </div>
         </form>
       </main>
     </>
