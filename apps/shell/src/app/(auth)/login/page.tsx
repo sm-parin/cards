@@ -19,7 +19,6 @@ export default function LoginPage() {
 
   const [tab, setTab] = useState<Tab>('login');
   const [email, setEmail] = useState('');
-  const [nickname, setNickname] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
@@ -50,7 +49,7 @@ export default function LoginPage() {
     try {
       const result = tab === 'login'
         ? await apiLogin(email.trim(), password)
-        : await apiRegister(email.trim(), password, nickname.trim() || undefined);
+        : await apiRegister(email.trim(), password);
       login(result.token, result.user);
       router.replace('/');
     } catch (err: unknown) {
@@ -98,25 +97,6 @@ export default function LoginPage() {
               required
             />
           </div>
-
-          {tab === 'register' && (
-            <div>
-              <label className="block text-sm text-gray-400 mb-1">
-                Nickname <span className="text-gray-600">(optional)</span>
-              </label>
-              <input
-                type="text"
-                value={nickname}
-                onChange={e => setNickname(e.target.value)}
-                maxLength={32}
-                className="w-full bg-gray-900 border border-gray-800 rounded-lg
-                           px-3 py-2 text-white text-sm focus:outline-none
-                           focus:border-gray-600"
-                autoComplete="nickname"
-                placeholder="Visible to other players"
-              />
-            </div>
-          )}
 
           <div>
             <label className="block text-sm text-gray-400 mb-1">Password</label>

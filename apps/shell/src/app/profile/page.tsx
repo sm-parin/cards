@@ -73,9 +73,11 @@ export default function ProfilePage() {
             <input
               type="email"
               value={user.email ?? ''}
-              disabled
-              className="w-full bg-gray-900 border border-gray-800 rounded-lg
-                         px-3 py-2 text-gray-500 text-sm cursor-not-allowed"
+              readOnly
+              tabIndex={-1}
+              className="w-full bg-gray-800/50 border border-gray-700/50 rounded-lg
+                         px-3 py-2 text-gray-500 text-sm cursor-not-allowed opacity-70
+                         select-none"
             />
           </div>
 
