@@ -6,4 +6,5 @@ export { CoinDisplay }    from './CoinDisplay';
 export { ToastList }      from './Toast';
 export { Button }         from './Button';
 export { RoomPlayerList } from './RoomPlayerList';
+export { GameLayout }     from './GameLayout';
 

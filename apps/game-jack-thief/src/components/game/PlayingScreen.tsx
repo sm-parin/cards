@@ -3,8 +3,10 @@
 import { useRef, useState, useEffect } from "react";
 import { useGameStore } from "@/store/gameStore";
 import { t } from "@/utils/i18n";
-import { isRed, getRank } from "@/utils/cardUtils";
+import { getRank } from "@/utils/cardUtils";
 import { emitJtPickCard, emitJtSelectTarget, emitJtReorderHand, emitJtDiscardPair } from "@/utils/socketEmitter";
+import { GameLayout, PlayerSeat, Card } from "@cards/ui";
+import GameHeader from "@/components/shared/GameHeader";
 
 const MAX_PICKS_CONSTRAINT = 3;
 
@@ -39,29 +41,27 @@ function useCountdown(active: boolean, durationSecs: number): number {
 // ---------------------------------------------------------------------------
 
 export default function PlayingScreen() {
-  const room = useGameStore((s) => s.room);
-  const gameState = useGameStore((s) => s.gameState);
-  const hand = useGameStore((s) => s.hand);
-  const player = useGameStore((s) => s.player);
+  const room            = useGameStore((s) => s.room);
+  const gameState       = useGameStore((s) => s.gameState);
+  const hand            = useGameStore((s) => s.hand);
+  const player          = useGameStore((s) => s.player);
   const gameNotification = useGameStore((s) => s.gameNotification);
-  const setHand = useGameStore((s) => s.setHand);
+  const setHand         = useGameStore((s) => s.setHand);
 
-  // Drag-rearrange state
   const dragIndexRef = useRef<number | null>(null);
-  // Pair-discard selection
   const [selectedForDiscard, setSelectedForDiscard] = useState<number | null>(null);
 
   const selectPlayerCountdown = useCountdown(gameState?.selectPlayerActive ?? false, 10);
-  const bufferCountdown = useCountdown(gameState?.bufferActive ?? false, 5);
-  const pickCountdown = useCountdown(gameState?.pickWindowActive ?? false, 10);
+  const bufferCountdown       = useCountdown(gameState?.bufferActive ?? false, 5);
+  const pickCountdown         = useCountdown(gameState?.pickWindowActive ?? false, 10);
 
   if (!room || !gameState) return null;
 
-  const selfId = player?.id ?? null;
-  const isSelfActive = selfId ? gameState.activePlayers.includes(selfId) : false;
-  const isSelfWinner = selfId ? gameState.winners.includes(selfId) : false;
-  const isSelfPicker = selfId !== null && selfId === gameState.currentPickerId;
-  const isSelfTarget = selfId !== null && selfId === gameState.targetPlayerId;
+  const selfId           = player?.id ?? null;
+  const isSelfActive     = selfId ? gameState.activePlayers.includes(selfId) : false;
+  const isSelfWinner     = selfId ? gameState.winners.includes(selfId) : false;
+  const isSelfPicker     = selfId !== null && selfId === gameState.currentPickerId;
+  const isSelfTarget     = selfId !== null && selfId === gameState.targetPlayerId;
   const constraintActive = gameState.activePlayers.length > MAX_PICKS_CONSTRAINT;
 
   const currentPickerName =
@@ -71,9 +71,11 @@ export default function PlayingScreen() {
       ? room.players.find((p) => p.id === gameState.targetPlayerId)?.username ?? "..."
       : null;
 
+  // ── Handlers ─────────────────────────────────────────────────────────────
+
   const handleSelectTarget = (targetPlayerId: string) => {
     if (!room || !isSelfPicker || gameState.targetPlayerId !== null) return;
-    if (!gameState.selectPlayerActive) return; // phase 1 window must be open
+    if (!gameState.selectPlayerActive) return;
     emitJtSelectTarget({ roomId: room.roomId, targetPlayerId });
   };
 
@@ -83,28 +85,14 @@ export default function PlayingScreen() {
     emitJtPickCard({ roomId: room.roomId, fromPlayerId, cardIndex });
   };
 
-  // ---------------------------------------------------------------------------
-  // Pair-discard handler for own hand (allowed in both pre-game and playing)
-  // ---------------------------------------------------------------------------
-
   const canDiscard = !(isSelfTarget && gameState.pickWindowActive);
 
   const handleOwnCardClick = (index: number) => {
     if (!room || !canDiscard) return;
-
-    if (selectedForDiscard === null) {
-      setSelectedForDiscard(index);
-      return;
-    }
-
-    if (selectedForDiscard === index) {
-      setSelectedForDiscard(null);
-      return;
-    }
-
+    if (selectedForDiscard === null) { setSelectedForDiscard(index); return; }
+    if (selectedForDiscard === index) { setSelectedForDiscard(null); return; }
     const cardA = hand[selectedForDiscard];
     const cardB = hand[index];
-
     if (getRank(cardA) === getRank(cardB)) {
       emitJtDiscardPair({ roomId: room.roomId, cards: [cardA, cardB] });
       setSelectedForDiscard(null);
@@ -113,23 +101,14 @@ export default function PlayingScreen() {
     }
   };
 
-  // ---------------------------------------------------------------------------
-  // Drag-rearrange handlers for own hand
-  // ---------------------------------------------------------------------------
-
-  const onDragStart = (index: number) => {
-    dragIndexRef.current = index;
-  };
-
+  const onDragStart = (index: number) => { dragIndexRef.current = index; };
   const onDrop = (dropIndex: number) => {
     const dragIndex = dragIndexRef.current;
     if (dragIndex === null || dragIndex === dropIndex) return;
     dragIndexRef.current = null;
-
     const newHand = [...hand];
     const [dragged] = newHand.splice(dragIndex, 1);
     newHand.splice(dropIndex, 0, dragged);
-
     const remaining = hand.map((c, i) => ({ c, i }));
     const usedSet = new Set<number>();
     const cardOrder = newHand.map((card) => {
@@ -138,7 +117,6 @@ export default function PlayingScreen() {
       usedSet.add(match.i);
       return match.i;
     });
-
     setHand(newHand);
     setSelectedForDiscard(null);
     if (room) emitJtReorderHand({ roomId: room.roomId, cardOrder });
@@ -146,218 +124,163 @@ export default function PlayingScreen() {
 
   const canSelfReorder = isSelfActive && !(isSelfTarget && gameState.pickWindowActive);
 
-  // ---------------------------------------------------------------------------
-  // Render
-  // ---------------------------------------------------------------------------
+  // ── Slot: opponents ───────────────────────────────────────────────────────
+
+  const opponentsSlot = (
+    <>
+      {room.players
+        .filter((p) => p.id !== selfId)
+        .map((p) => {
+          const isActive         = gameState.activePlayers.includes(p.id);
+          const isThisTarget     = p.id === gameState.targetPlayerId;
+          const handCount        = gameState.handSizes[p.id] ?? 0;
+          const picksFromP       = selfId ? (gameState.pickCounts[selfId]?.[p.id] ?? 0) : 0;
+          const constraintBlocked = constraintActive && picksFromP >= MAX_PICKS_CONSTRAINT;
+          const canSelectAsTarget =
+            isSelfPicker && isActive && handCount > 0 &&
+            gameState.targetPlayerId === null && gameState.selectPlayerActive && !constraintBlocked;
+
+          return (
+            <PlayerSeat
+              key={p.id}
+              username={p.username}
+              cardCount={handCount}
+              isMyTurn={isThisTarget}
+              isConnected={isActive}
+              onClick={canSelectAsTarget ? () => handleSelectTarget(p.id) : undefined}
+            />
+          );
+        })}
+    </>
+  );
+
+  // ── Slot: table ───────────────────────────────────────────────────────────
+
+  const targetId         = gameState.targetPlayerId;
+  const targetHandCount  = targetId ? (gameState.handSizes[targetId] ?? 0) : 0;
+  const showTargetCards  = targetId !== null && (gameState.bufferActive || gameState.pickWindowActive);
+
+  const tableSlot = showTargetCards ? (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+      <span style={{ fontSize: 13, color: '#9ca3af' }}>
+        {gameState.pickWindowActive && isSelfPicker
+          ? `Pick a card from ${targetName} (${pickCountdown}s)`
+          : `${currentPickerName} picking from ${targetName}${gameState.bufferActive ? ` — buffer ${bufferCountdown}s` : ''}`}
+      </span>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'nowrap', overflowX: 'auto' }}>
+        {Array.from({ length: targetHandCount }, (_, i) => (
+          <div
+            key={i}
+            onClick={(e) => { e.stopPropagation(); handlePickCard(targetId!, i); }}
+            style={{ cursor: isSelfPicker && gameState.pickWindowActive ? 'pointer' : 'default' }}
+          >
+            <Card
+              faceDown
+              size="md"
+              animate
+              disabled={!(isSelfPicker && gameState.pickWindowActive)}
+              onClick={isSelfPicker && gameState.pickWindowActive ? () => handlePickCard(targetId!, i) : undefined}
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  ) : isSelfPicker && gameState.selectPlayerActive ? (
+    <p style={{ fontSize: 14, color: '#9ca3af' }}>
+      Select a player above ↑ ({selectPlayerCountdown}s)
+    </p>
+  ) : (
+    <p style={{ fontSize: 14, color: '#6b7280' }}>
+      {targetName
+        ? `${currentPickerName} → ${targetName}`
+        : `${currentPickerName}'s turn`}
+    </p>
+  );
+
+  // ── Slot: gameInfo ────────────────────────────────────────────────────────
+
+  const gameInfoSlot = (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {/* Status */}
+      <div style={{ fontSize: 13, fontWeight: 600,
+        color: isSelfPicker ? '#16a34a' : isSelfTarget ? '#ef4444' : '#d1d5db' }}>
+        {isSelfPicker && gameState.selectPlayerActive
+          ? 'Your turn'
+          : isSelfPicker && gameState.pickWindowActive
+          ? `Picking (${pickCountdown}s)`
+          : isSelfTarget && gameState.pickWindowActive
+          ? `Being picked (${pickCountdown}s)`
+          : isSelfWinner
+          ? 'You won!'
+          : `${currentPickerName}'s turn`}
+      </div>
+
+      {/* Notification */}
+      {gameNotification && (
+        <p style={{ fontSize: 12, color: '#ef4444' }}>{gameNotification}</p>
+      )}
+
+      {/* Winners */}
+      {gameState.winners.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <span style={{ fontSize: 11, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+            {t("playing.winners_label")}
+          </span>
+          {gameState.winners.map((id) => {
+            const p = room.players.find((rp) => rp.id === id);
+            return (
+              <span key={id} style={{ fontSize: 12, fontWeight: 600, color: '#16a34a' }}>
+                {p?.username ?? id}{id === selfId ? ' (you)' : ''}
+              </span>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+
+  // ── Slot: hand ────────────────────────────────────────────────────────────
+
+  const handSlot = hand.length === 0 ? (
+    <p style={{ fontSize: 13, color: isSelfWinner ? '#16a34a' : '#6b7280' }}>
+      {isSelfWinner ? 'You won! Spectating...' : 'No cards remaining'}
+    </p>
+  ) : (
+    <div style={{ display: 'flex', gap: 6, flexWrap: 'nowrap' }}>
+      {hand.map((card, i) => {
+        const isSelected = selectedForDiscard === i;
+        return (
+          <div
+            key={i}
+            draggable={canSelfReorder}
+            onDragStart={() => canSelfReorder && onDragStart(i)}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={() => canSelfReorder && onDrop(i)}
+            onClick={() => handleOwnCardClick(i)}
+            style={{ cursor: canDiscard ? (canSelfReorder ? 'grab' : 'pointer') : 'not-allowed' }}
+          >
+            <Card
+              card={card}
+              size="md"
+              selected={isSelected}
+              disabled={!canDiscard}
+              animate={false}
+            />
+          </div>
+        );
+      })}
+    </div>
+  );
+
+  // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <main className="flex min-h-screen flex-col bg-background px-4 py-6">
-      <div className="flex flex-col gap-6 w-full max-w-2xl mx-auto">
-
-        {/* Turn indicator */}
-        <div className="text-center bg-surface border border-border rounded-xl px-4 py-3">
-          {isSelfPicker && gameState.selectPlayerActive ? (
-            <p className="text-sm font-semibold text-primary">
-              Your turn — select a player ({selectPlayerCountdown}s)
-            </p>
-          ) : isSelfPicker && gameState.bufferActive ? (
-            <p className="text-sm font-semibold text-warning">
-              Picking from <span className="font-bold">{targetName}</span> — buffer {bufferCountdown}s
-            </p>
-          ) : isSelfPicker && gameState.pickWindowActive ? (
-            <p className="text-sm font-semibold text-primary">
-              Pick a card from <span className="font-bold">{targetName}</span> — {pickCountdown}s left
-            </p>
-          ) : isSelfTarget && gameState.bufferActive ? (
-            <p className="text-sm font-semibold text-warning">
-              <span className="font-bold">{currentPickerName}</span> is targeting you — {bufferCountdown}s before pick
-            </p>
-          ) : isSelfTarget && gameState.pickWindowActive ? (
-            <p className="text-sm font-semibold text-danger">
-              <span className="font-bold">{currentPickerName}</span> is picking from you — {pickCountdown}s
-            </p>
-          ) : isSelfWinner ? (
-            <p className="text-sm text-success font-semibold">You won! Spectating...</p>
-          ) : (
-            <p className="text-sm text-muted">
-              {targetName
-                ? `${currentPickerName} picking from ${targetName}${gameState.bufferActive ? ` (${bufferCountdown}s)` : gameState.pickWindowActive ? ` (${pickCountdown}s)` : ""}`
-                : `${currentPickerName}'s turn${gameState.selectPlayerActive ? ` (${selectPlayerCountdown}s)` : ""}`}
-            </p>
-          )}
-        </div>
-
-        {/* Error notification */}
-        {gameNotification && (
-          <p className="text-center text-sm text-danger font-medium">{gameNotification}</p>
-        )}
-
-        {/* Winners list */}
-        {gameState.winners.length > 0 && (
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs text-muted font-medium uppercase tracking-wide">
-              {t("playing.winners_label")}:
-            </span>
-            {gameState.winners.map((id) => {
-              const p = room.players.find((rp) => rp.id === id);
-              return (
-                <span key={id} className="text-xs font-semibold text-primary">
-                  {p?.username ?? id}{id === selfId ? " (you)" : ""}
-                </span>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Other players */}
-        <div className="flex flex-col gap-4">
-          {room.players
-            .filter((p) => p.id !== selfId)
-            .map((p) => {
-              const isActive = gameState.activePlayers.includes(p.id);
-              const isThisTarget = p.id === gameState.targetPlayerId;
-              const handCount = gameState.handSizes[p.id] ?? 0;
-              const picksFromP = selfId ? (gameState.pickCounts[selfId]?.[p.id] ?? 0) : 0;
-              const constraintBlocked = constraintActive && picksFromP >= MAX_PICKS_CONSTRAINT;
-
-              const canSelectAsTarget =
-                isSelfPicker &&
-                isActive &&
-                handCount > 0 &&
-                gameState.targetPlayerId === null &&
-                gameState.selectPlayerActive &&
-                !constraintBlocked;
-
-              const canPickCards = isSelfPicker && isThisTarget && gameState.pickWindowActive;
-
-              let borderClass = "border-border";
-              if (isThisTarget) borderClass = "border-warning";
-              if (canSelectAsTarget) borderClass = "border-primary/50";
-
-              return (
-                <div
-                  key={p.id}
-                  className={[
-                    "flex flex-col gap-2 bg-surface border rounded-xl p-4 transition-all",
-                    borderClass,
-                    canSelectAsTarget ? "cursor-pointer hover:bg-surface/80" : "",
-                  ].join(" ")}
-                  onClick={canSelectAsTarget ? () => handleSelectTarget(p.id) : undefined}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-foreground">{p.username}</span>
-                      {isThisTarget && (
-                        <span className="text-xs bg-warning/20 text-warning px-2 py-0.5 rounded-full font-medium">
-                          Target
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {!isActive && (
-                        <span className="text-xs text-success font-medium">Won</span>
-                      )}
-                      {constraintBlocked && isActive && (
-                        <span className="text-xs text-danger">Max picks reached</span>
-                      )}
-                      {constraintActive && isActive && !constraintBlocked && selfId && (
-                        <span className="text-xs text-muted">
-                          {picksFromP}/{MAX_PICKS_CONSTRAINT} picks
-                        </span>
-                      )}
-                      {canSelectAsTarget && (
-                        <span className="text-xs text-primary font-medium">Click to target</span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Face-down cards */}
-                  {handCount === 0 ? (
-                    <p className="text-xs text-muted">{t("playing.hand_empty")}</p>
-                  ) : (
-                    <div className="flex flex-wrap gap-1.5">
-                      {Array.from({ length: handCount }, (_, i) => (
-                        <button
-                          key={i}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handlePickCard(p.id, i);
-                          }}
-                          disabled={!canPickCards}
-                          className={[
-                            "w-10 h-14 rounded-lg border-2 text-xl transition-all",
-                            "flex items-center justify-center",
-                            canPickCards
-                              ? "border-primary bg-primary/20 hover:bg-primary/40 hover:scale-105 cursor-pointer"
-                              : isThisTarget && gameState.bufferActive
-                              ? "border-warning/60 bg-warning/10 cursor-not-allowed"
-                              : "border-border bg-surface opacity-50 cursor-not-allowed",
-                          ].join(" ")}
-                          title={canPickCards ? `Pick this card from ${p.username}` : ""}
-                        >
-                          🂠
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-        </div>
-
-        {/* Own hand */}
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-muted font-medium uppercase tracking-wide">
-              {t("playing.your_hand")} ({hand.length})
-            </span>
-            {selectedForDiscard !== null && canDiscard && (
-              <span className="text-xs text-primary font-medium">Select matching rank to discard</span>
-            )}
-            {canSelfReorder && hand.length > 1 && selectedForDiscard === null && canDiscard && (
-              <span className="text-xs text-muted italic">Drag to rearrange · tap pair to discard</span>
-            )}
-            {isSelfTarget && gameState.pickWindowActive && (
-              <span className="text-xs text-danger font-medium">Rearranging &amp; discard locked</span>
-            )}
-          </div>
-
-          {hand.length === 0 ? (
-            <p className="text-sm text-success font-semibold">
-              {isSelfWinner ? "You won! Spectating..." : "No cards remaining"}
-            </p>
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              {hand.map((card, i) => {
-                const red = isRed(card);
-                const isSelected = selectedForDiscard === i;
-                return (
-                  <div
-                    key={i}
-                    draggable={canSelfReorder}
-                    onDragStart={() => canSelfReorder && onDragStart(i)}
-                    onDragOver={(e) => { e.preventDefault(); }}
-                    onDrop={() => canSelfReorder && onDrop(i)}
-                    onClick={() => handleOwnCardClick(i)}
-                    className={[
-                      "px-3 py-2 rounded-lg border text-sm font-semibold font-mono select-none transition-all",
-                      red ? "text-red-500" : "text-foreground",
-                      !canDiscard
-                        ? "border-border bg-surface opacity-50 cursor-not-allowed"
-                        : isSelected
-                        ? "border-primary ring-2 ring-primary bg-primary/10 scale-105 cursor-pointer"
-                        : "border-border bg-surface hover:border-primary/60 cursor-pointer",
-                      canSelfReorder && canDiscard ? "cursor-grab active:cursor-grabbing" : "",
-                    ].join(" ")}
-                  >
-                    {card}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </div>
-    </main>
+    <GameLayout
+      header={<GameHeader />}
+      opponents={opponentsSlot}
+      table={tableSlot}
+      gameInfo={gameInfoSlot}
+      hand={handSlot}
+    />
   );
 }

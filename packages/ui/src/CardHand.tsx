@@ -28,10 +28,11 @@ export function CardHand({
       className={className}
       style={{
         display:        'flex',
-        flexWrap:       'wrap',
-        gap:            overlap ? '0' : '4px',
+        flexWrap:       'nowrap',
+        gap:            overlap ? '0' : '6px',
         alignItems:     'flex-end',
-        justifyContent: 'center',
+        justifyContent: 'flex-start',
+        overflowX:      'auto',
       }}
     >
       {cards.map((card, i) => {

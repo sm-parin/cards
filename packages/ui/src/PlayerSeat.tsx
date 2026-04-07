@@ -8,6 +8,9 @@ interface PlayerSeatProps {
   isYou?: boolean;
   /** Card count shown as badge */
   cardCount?: number;
+  /** Card played this trick — shown as a small chip below avatar */
+  playedCard?: string;
+  onClick?: () => void;
   className?: string;
 }
 
@@ -18,17 +21,22 @@ export function PlayerSeat({
   isMyTurn = false,
   isYou = false,
   cardCount,
+  playedCard,
+  onClick,
   className = '',
 }: PlayerSeatProps) {
   return (
     <div
       className={className}
+      onClick={onClick}
       style={{
         display:       'flex',
         flexDirection: 'column',
         alignItems:    'center',
         gap:           '4px',
         opacity:       isConnected ? 1 : 0.5,
+        cursor:        onClick ? 'pointer' : 'default',
+        flexShrink:    0,
       }}
     >
       {/* Avatar ring */}
@@ -93,6 +101,22 @@ export function PlayerSeat({
       {coins !== undefined && (
         <span style={{ fontSize: '11px', color: colors.accent }}>
           {coins}
+        </span>
+      )}
+
+      {/* Played card chip */}
+      {playedCard !== undefined && (
+        <span style={{
+          fontSize:     '11px',
+          fontWeight:   600,
+          color:        colors.textPrimary,
+          background:   '#1e293b',
+          border:       '1px solid #334155',
+          padding:      '2px 6px',
+          borderRadius: '6px',
+          marginTop:    '2px',
+        }}>
+          {playedCard}
         </span>
       )}
     </div>

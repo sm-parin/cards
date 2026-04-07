@@ -1,57 +1,60 @@
 "use client";
 
 /**
- * StackTable — center table showing cards played in the current round.
+ * StackTable — cards played in the current trick, shown in the table area.
  *
- * Pure presentational component; no store access — receives data as props.
+ * Single horizontal row (no wrap). Each card has the player's name below it.
+ * Uses @cards/ui Card for consistent visuals with the hand.
  */
 
 import { t } from "@/utils/i18n";
-import Card from "@/components/game/playing/Card";
+import { Card } from "@cards/ui";
 import type { StackCard, Player } from "@/types";
 
 interface Props {
   currentStack: StackCard[];
   players: Player[];
-  /** Socket ID of the local player — used to label own card */
   selfId: string | null;
 }
 
-/** Resolve a player's display name from the player list */
 function resolveName(players: Player[], playerId: string, selfId: string | null): string {
   if (playerId === selfId) return t("playing.your_play");
-  return players.find((p) => p.id === playerId)?.username ?? playerId;
+  return players.find((p) => p.id === playerId)?.username ?? "...";
 }
 
-export default function StackTable({
-  currentStack,
-  players,
-  selfId,
-}: Props) {
-  return (
-    <div className="flex flex-col gap-6 w-full max-w-md mx-auto px-4">
-      <div className="flex flex-col gap-3">
-        <h3 className="text-xs font-semibold text-muted uppercase tracking-wider text-center">
-          {t("playing.stack_title")}
-        </h3>
+export default function StackTable({ currentStack, players, selfId }: Props) {
+  if (currentStack.length === 0) {
+    return (
+      <p style={{ fontSize: 13, color: "#6b7280" }}>
+        {t("playing.stack_empty")}
+      </p>
+    );
+  }
 
-        {currentStack.length === 0 ? (
-          <p className="text-sm text-muted text-center py-4">
-            {t("playing.stack_empty")}
-          </p>
-        ) : (
-          <div className="flex flex-wrap justify-center gap-4">
-            {currentStack.map(({ playerId, card }) => (
-              <div key={playerId} className="flex flex-col items-center gap-1">
-                <Card card={card} />
-                <span className="text-xs text-muted">
-                  {resolveName(players, playerId, selfId)}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+  return (
+    <div style={{
+      display:    'flex',
+      gap:        12,
+      alignItems: 'flex-end',
+      overflowX:  'auto',
+    }}>
+      {currentStack.map(({ playerId, card }) => (
+        <div
+          key={playerId}
+          style={{
+            display:       'flex',
+            flexDirection: 'column',
+            alignItems:    'center',
+            gap:           6,
+            flexShrink:    0,
+          }}
+        >
+          <Card card={card} size="md" animate />
+          <span style={{ fontSize: 11, color: '#9ca3af', whiteSpace: 'nowrap' }}>
+            {resolveName(players, playerId, selfId)}
+          </span>
+        </div>
+      ))}
     </div>
   );
 }

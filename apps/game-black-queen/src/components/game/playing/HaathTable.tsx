@@ -7,7 +7,7 @@
  */
 
 import { t } from "@/utils/i18n";
-import Card from "@/components/game/playing/Card";
+import { Card } from "@cards/ui";
 import type { StackCard, Player } from "@/types";
 
 interface Props {

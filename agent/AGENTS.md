@@ -2,7 +2,7 @@
 # Overwrite this file completely at the end of every session.
 # Never append — always replace the full file.
 # Goal: give AI agents complete platform context in minimum tokens.
-# Last updated: 2026-04-05 — me-talk instruction added
+# Last updated: 2026-04-07 — game table revamp, email auth, @cards/ui GameLayout added
 
 ## Step 0 reading list (mandatory before any work)
 1. AGENTS.md (this file)
@@ -11,7 +11,7 @@
 
 ## Communication style
 See docs/agent-instructions.md. Currently: Me talk (short 3-6 word sentences,
-no filler, tools first, drop articles).
+no filler, tools first, drop articles). Commit messages in plain text (no code blocks).
 
 ## What this platform is
 Multi-game card platform. Shell owns auth. Games receive JWT via URL param.
@@ -54,6 +54,9 @@ Build: Turborepo + pnpm workspaces
 5. Server verifies JWT on socket connect → sets socket.authUser = {id, username, coins}
 6. If token missing/invalid → guest: { id: socket.id, username: 'Guest_XXXX', coins: 0, isGuest: true }
 
+Auth is email + password (not username). JWT payload includes: { userId, username, email, nickname }.
+`username` in DB = computed display name: `nickname ?? email.split('@')[0]`.
+
 ## Token storage keys
 Shell:        `cards_token`
 Black Queen:  `bq_token`
@@ -86,7 +89,9 @@ Socket handler files:
 ## Database
 
 ### Postgres tables
-users             — id UUID PK, username UNIQUE, password (bcrypt), coins INT default 1000, created_at
+users             — id UUID PK, email TEXT (partial unique index WHERE NOT NULL),
+                    username TEXT (computed display name, nullable), nickname TEXT, bio TEXT,
+                    password TEXT NOT NULL, coins INT default 1000, created_at
 matches           — id UUID PK, room_id TEXT, winner_team TEXT, bid_target INT, played_at
 match_players     — (match_id, user_id) composite PK, team TEXT, coin_delta INT
 coin_transactions — id UUID PK, user_id, delta INT, reason TEXT, match_id, created_at (append-only)
@@ -94,14 +99,16 @@ coin_transactions — id UUID PK, user_id, delta INT, reason TEXT, match_id, cre
 ### Redis keys and TTLs
 room:{roomId}:lobby  — lobby/waiting room state, TTL 30 minutes (1800s)
 game:{roomId}:state  — active game state, TTL 2 hours (7200s)
-user:{userId}        — user profile cache (see store/userStore.js for TTL)
+session:{userId}     — user profile cache, TTL 24 hours
 
 ### Mid-game state rule
 Card plays, bids, partner updates — in-memory ONLY. Not synced to Redis.
 Redis checkpointed only at: createRoom, joinRoom, startGame, deleteRoom.
 
 ## Shared packages — exports
-@cards/auth    — register(), login(), getShellToken/setShellToken/clearShellToken,
+@cards/auth    — register(email, pass, nickname?), login(email, pass),
+                 updateProfile(token, {nickname, bio}),
+                 getShellToken/setShellToken/clearShellToken,
                  decodeToken(), isTokenExpired(); types: AuthUser, AuthResponse, TokenPayload
 @cards/config  — GAME_CONFIG (black-queen + jack-thief entries with url/tokenKey/displayName/
                  minPlayers/maxPlayers); types: GameType, GameConfig
@@ -113,9 +120,50 @@ Redis checkpointed only at: createRoom, joinRoom, startGame, deleteRoom.
 @cards/hooks   — useCountdown, useToast (+ Toast/ToastVariant types), useWindowFocus,
                  useLocalStorage, useDebounce
 @cards/theme   — colors, spacing, radii, typography, animation, zIndex (all as const objects)
-@cards/ui      — Card, CardHand, PlayerSeat, TurnTimer, CoinDisplay, Toast, Button, RoomPlayerList
+@cards/ui      — Card, CardHand, PlayerSeat, TurnTimer, CoinDisplay, Toast, Button,
+                 RoomPlayerList, GameLayout
+                 GameLayout: slot-based game table shell (header/opponents/table/gameInfo/hand)
 @cards/game-sdk — createGameSocket(tokenKey, serverUrl), getSocket(), destroySocket(),
                   useGameConnection(), useRoom<T extends Room>(), useSelf()
+
+## @cards/ui — GameLayout slot API
+```tsx
+<GameLayout
+  header={<GameHeader />}
+  opponents={/* single row of PlayerSeat components — non-self players */}
+  table={/* cards played / phase panel */}
+  gameInfo={/* bottom-left: phase label, bid, suit, timer */}
+  hand={/* bottom-right: player's own cards */}
+/>
+```
+Uses inline CSS only (no Tailwind) — safe for transpilePackages consumption.
+Fixed overlays (notifications, flash effects) go OUTSIDE GameLayout as position:fixed.
+
+## @cards/ui — Card component
+Dark minimal design: face bg `#0f172a`, border `#1e293b`.
+animate prop (default true) = mount slide-in (opacity + translateY, 250ms).
+Face cards K/Q/J: large rank + crown badge (♔♕♖). Ace: oversized suit, no rank.
+faceDown: diagonal stripe pattern `#1e3a5f`. Selected: gold border + glow + lift.
+
+## Game table layout (BQ + JT)
+Both games now use GameLayout. Layout: header → opponents strip → table area → bottom row.
+Bottom row: gameInfo panel (220px fixed, left) + hand area (flex-1, right).
+Opponents strip: single row, no wrap, overflow-x scroll, PlayerSeat per opponent.
+Table area: played cards (BQ: StackTable) or pick area (JT: face-down cards when target selected).
+
+## BQ game — key files for game screen
+components/game/GameScreen.tsx          — GameLayout shell, routes phase-dependent slots
+components/game/playing/OpponentsRow.tsx — PlayerSeat per opponent (isMyTurn, playedCard)
+components/game/playing/GameInfoPanel.tsx — phase/bid/masterSuit/partner + TurnTimer
+components/game/playing/StackTable.tsx   — current trick cards (Card from @cards/ui)
+components/game/playing/Hand.tsx         — interactive hand (CardHand from @cards/ui)
+components/game/PlayerHand.tsx           — static hand for bidding/partner phases
+
+## JT game — PlayingScreen slots
+opponents: PlayerSeat per non-self player, click = selectTarget when eligible
+table: face-down cards of target player when pick window active; otherwise turn status
+gameInfo: picker/target status text + countdown + winners list
+hand: own hand with drag-rearrange + tap-pair-discard logic (Card from @cards/ui)
 
 ## Socket events (most critical with payloads)
 INIT_PLAYER         client→server  {}                      triggers rejoin if player in a room
@@ -149,9 +197,6 @@ NEXT_PUBLIC_JACK_THIEF_URL=https://jt.vercel.app
 NEXT_PUBLIC_SOCKET_URL=https://server.onrender.com
 NEXT_PUBLIC_SHELL_URL=https://shell.vercel.app
 
-Note: NEXT_PUBLIC_API_URL is also read by @cards/auth for register/login HTTP calls.
-      Game apps need this too if they call auth endpoints directly.
-
 ## Production URLs
 Server: Render — Docker container, Singapore region, free tier (sleeps after 15min inactivity)
         UptimeRobot pings /healthz every 5min to prevent cold starts
@@ -176,16 +221,17 @@ Must cover packages/* too — @cards/ui and @cards/game-sdk have internal worksp
 8. Add NEXT_PUBLIC_SOCKET_URL + NEXT_PUBLIC_SHELL_URL to game Vercel env vars
 9. Update CORS_ORIGIN on Render to include the new game's Vercel URL → save (auto-redeploys)
 10. Add new game's packages to next.config.ts transpilePackages array
+11. Use GameLayout from @cards/ui for the playing screen shell
 See docs/architecture/adding-a-game.md for full annotated checklist.
 
 ## Known limitations
 - Mid-game state in server RAM only — server restart during active game loses all game state
 - Guest players cannot rejoin after disconnect (no stable ID)
 - JT game state in separate jackThiefGames Map (not room store) — deleteRoom alone is insufficient; jackThiefGames.delete(roomId) must also be called
-- @cards/ui and @cards/game-sdk available but not yet used in existing games' useSocket.ts
 - Only apps/server has a .env.example — no examples for shell or game apps
 - No automated tests anywhere in the codebase
 - @cards/auth API_URL default is localhost:3001 but server runs on 5000 — inconsistency in fallback values only; prod uses env vars so no runtime impact
+- @cards/ui packages ship raw TS — tsc on game apps will show React type errors for shared packages (pre-existing, not real errors; Next.js compiles them correctly via transpilePackages)
 
 ## What NOT to do
 - Never use @ts-ignore
@@ -197,3 +243,5 @@ See docs/architecture/adding-a-game.md for full annotated checklist.
 - Never use redis.keys() in hot paths — O(N) scan operation
 - Never call roomStore.startGame() for JT games — JT bypasses roomStore game state
 - Never use git filter-branch — use git filter-repo instead
+- Never add Tailwind classes to @cards/ui components — use inline CSS from @cards/theme only
+- Never put position:fixed overlays inside GameLayout — they belong outside the component tree
