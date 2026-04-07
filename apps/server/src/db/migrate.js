@@ -16,8 +16,6 @@ CREATE TABLE IF NOT EXISTS users (
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS users_email_unique ON users (email) WHERE email IS NOT NULL;
-
 CREATE TABLE IF NOT EXISTS matches (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   room_id     TEXT NOT NULL,
