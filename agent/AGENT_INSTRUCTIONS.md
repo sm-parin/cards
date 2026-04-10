@@ -264,3 +264,7 @@ Do this alongside CHAT.md — both happen at the end of every exchange.
 ### INSTRUCTION 3 — Commit message format
 Always write the commit message inside a code block (triple backticks).
 Follow the RULE 4 template. Label it `COMMIT MESSAGE` above the block.
+
+### INSTRUCTION 4 — Skip branch creation
+Never create a git branch. Skip RULE 1 and Step 1 of the SESSION SEQUENCE entirely.
+Work directly on whatever branch is currently checked out.
