@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@cards/types":    "workspace:*",
+    "@cards/auth":     "workspace:*",
     "@cards/ui":       "workspace:*",
     "@cards/i18n":     "workspace:*",
     "@cards/hooks":    "workspace:*",

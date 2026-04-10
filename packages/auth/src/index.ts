@@ -46,6 +46,20 @@ export async function login(
   return data;
 }
 
+/** Fetch fresh user data from the server for the given token. */
+export async function fetchMe(token: string): Promise<AuthUser | null> {
+  try {
+    const res = await fetch(`${API_URL}/auth/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.user as AuthUser;
+  } catch {
+    return null;
+  }
+}
+
 export async function updateProfile(
   token: string,
   profile: { nickname?: string | null; bio?: string | null }

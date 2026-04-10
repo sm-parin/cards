@@ -5,6 +5,7 @@ import { getToken, setToken } from '@/utils/socketEmitter';
 import { useGameStore } from '@/store/gameStore';
 import AppView from '@/components/AppView';
 import { registerGameTranslations } from '@cards/i18n';
+import { fetchMe } from '@cards/auth';
 import gameLocale from '@/config/locales/en.json';
 
 registerGameTranslations('en', gameLocale as Record<string, string>);
@@ -33,7 +34,11 @@ function PageContent() {
       try {
         const base64 = token.split('.')[1];
         const payload = JSON.parse(atob(base64.replace(/-/g, '+').replace(/_/g, '/')));
+        // Optimistic render from JWT while we fetch fresh coins
         setAuthUser({ id: payload.userId, username: payload.username, email: payload.email, nickname: payload.nickname ?? null, coins: 0 });
+        fetchMe(token).then((fresh) => {
+          if (fresh) setAuthUser({ id: fresh.id, username: fresh.username, email: fresh.email, nickname: fresh.nickname ?? null, coins: fresh.coins });
+        });
       } catch {
         // Malformed token — play as guest
         setAuthUser({ id: '', username: 'Guest', coins: 0 });

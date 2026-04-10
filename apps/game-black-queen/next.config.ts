@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
   transpilePackages: [
     "@cards/types",
     "@cards/ui",
+    "@cards/auth",
     "@cards/i18n",
     "@cards/hooks",
     "@cards/theme",

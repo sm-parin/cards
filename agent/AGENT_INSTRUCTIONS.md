@@ -253,3 +253,11 @@ Append only — never overwrite existing content.
 ### INSTRUCTION 2 — Update docs at end of each exchange
 At the end of every exchange where code or architecture changed, execute RULE 5 (all 5a–5e steps).
 Do this alongside CHAT.md — both happen at the end of every exchange.
+
+### INSTRUCTION 3 — Commit message format
+Always write the commit message inside a code block (triple backticks).
+Follow the RULE 4 template. Label it `COMMIT MESSAGE` above the block.
+
+### INSTRUCTION 4 — Skip branch creation
+Never create a git branch. Skip RULE 1 and Step 1 of the SESSION SEQUENCE entirely.
+Work directly on whatever branch is currently checked out.

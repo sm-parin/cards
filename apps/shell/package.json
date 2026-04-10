@@ -12,6 +12,7 @@
     "@cards/auth": "workspace:*",
     "@cards/config": "workspace:*",
     "@cards/types": "workspace:*",
+    "@cards/ui": "workspace:*",
     "@tailwindcss/postcss": "^4.2.2",
     "next": "16.2.2",
     "postcss": "^8.5.8",

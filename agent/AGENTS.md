@@ -2,7 +2,7 @@
 # Overwrite this file completely at the end of every session.
 # Never append — always replace the full file.
 # Goal: give AI agents complete platform context in minimum tokens.
-# Last updated: 2026-04-07 — game table revamp, email auth, @cards/ui GameLayout added
+# Last updated: 2026-04-10 — global header wired (PlatformHeader → all apps), coins fix, @cards/auth in transpilePackages
 
 ## Step 0 reading list (mandatory before any work)
 1. AGENTS.md (this file)
@@ -106,6 +106,7 @@ Redis checkpointed only at: createRoom, joinRoom, startGame, deleteRoom.
 
 ## Shared packages — exports
 @cards/auth    — register(email, pass, nickname?), login(email, pass),
+                 fetchMe(token) — fetch fresh user from /auth/me (returns AuthUser | null),
                  updateProfile(token, {nickname, bio}),
                  getShellToken/setShellToken/clearShellToken,
                  decodeToken(), isTokenExpired(); types: AuthUser, AuthResponse, TokenPayload
@@ -120,10 +121,21 @@ Redis checkpointed only at: createRoom, joinRoom, startGame, deleteRoom.
                  useLocalStorage, useDebounce
 @cards/theme   — colors, spacing, radii, typography, animation, zIndex (all as const objects)
 @cards/ui      — Card, CardHand, PlayerSeat, TurnTimer, CoinDisplay, Toast, Button,
-                 RoomPlayerList, GameLayout
+                 RoomPlayerList, GameLayout, PlatformHeader
+                 PlatformHeader: shared header (userId, displayName, coins, shellUrl, onLogout, onAvatarClick)
                  GameLayout: slot-based game table shell (header/opponents/table/gameInfo/hand)
 @cards/game-sdk — createGameSocket(tokenKey, serverUrl), getSocket(), destroySocket(),
                   useGameConnection(), useRoom<T extends Room>(), useSelf()
+
+## Shell header
+apps/shell/src/components/Header.tsx — thin wrapper around PlatformHeader.
+Passes useAuth() user data + router callbacks. No custom markup.
+Shell transpilePackages: @cards/ui, @cards/types, @cards/config, @cards/auth.
+
+## Game transpilePackages
+Both game next.config.ts include: @cards/types, @cards/ui, @cards/auth, @cards/i18n, @cards/hooks, @cards/theme, @cards/game-sdk.
+@cards/auth ships raw TS — must be in transpilePackages of any app importing from it.
+Symptom when missing: imports resolve to undefined at runtime (no build error), features silently fail.
 
 ## @cards/ui — GameLayout slot API
 ```tsx
@@ -239,6 +251,7 @@ Platform-specific constraints:
 - Never use redis.keys() in hot paths — O(N) scan operation
 - Never call roomStore.startGame() for JT games — JT bypasses roomStore game state
 - Never use git filter-branch — use git filter-repo instead
+- Never add a new @cards/* package import to a game app without adding that package to its transpilePackages in next.config.ts — it will compile but silently fail at runtime
 - Never add Tailwind classes to @cards/ui components — use inline CSS from @cards/theme only
 - Never put position:fixed overlays inside GameLayout — they belong outside the component tree
 - Never cross-import between server game handler folders (BQ handlers must not import JT services)
