@@ -260,3 +260,7 @@ At the end of every exchange where code or architecture changed, update relevant
 - Create issue record in `docs/issues/` if bug was fixed
 - Update `docs/architecture/` if topology/auth/schema/packages/deployment changed
 Do this alongside CHAT.md — both happen at the end of every exchange.
+
+### INSTRUCTION 3 — Commit message format
+Always write the commit message inside a code block (triple backticks).
+Follow the RULE 4 template. Label it `COMMIT MESSAGE` above the block.

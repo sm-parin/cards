@@ -179,6 +179,10 @@ TypeScript: zero app-level errors across all three apps.
 
 ---
 
+**User:** ADD INSTRUCTION — give commit msg in code block
+
+**Agent:** Added INSTRUCTION 3 to `agent/AGENT_INSTRUCTIONS.md`: always write the commit message inside a code block (triple backticks), labelled `COMMIT MESSAGE`. The old "plain text" rule was in the deleted `docs/agent-instructions.md` and is now superseded.
+
 ---
 
 **User:** header is not persistent — shell has updated one but jack thief game does not and coins are still mismatching [screenshots]
