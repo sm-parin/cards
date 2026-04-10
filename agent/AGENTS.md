@@ -6,11 +6,10 @@
 
 ## Step 0 reading list (mandatory before any work)
 1. AGENTS.md (this file)
-2. docs/WRITING_GUIDE.md
-3. docs/agent-instructions.md — permanent rules added via ADD INSTRUCTION protocol
+2. agent/AGENT_INSTRUCTIONS.md — rules, session sequence, permanent instructions
 
 ## Communication style
-See docs/agent-instructions.md. Currently: Me talk (short 3-6 word sentences,
+See TALK STYLE in agent/AGENT_INSTRUCTIONS.md. Currently: Me talk (short 3-6 word sentences,
 no filler, tools first, drop articles). Commit messages in plain text (no code blocks).
 
 ## What this platform is
@@ -234,14 +233,12 @@ See docs/architecture/adding-a-game.md for full annotated checklist.
 - @cards/ui packages ship raw TS — tsc on game apps will show React type errors for shared packages (pre-existing, not real errors; Next.js compiles them correctly via transpilePackages)
 
 ## What NOT to do
-- Never use @ts-ignore
-- Never cross-import between game handler folders on server (BQ handlers must not import JT services)
+General conduct rules → see HARD RULES in agent/AGENT_INSTRUCTIONS.md.
+Platform-specific constraints:
 - Never emit to io.to(player.id) — always use player.socketId
-- Never commit .env or .env.local files
-- Never put game-specific logic in shared packages
-- Never modify old docs/ session files — append only, new files only
 - Never use redis.keys() in hot paths — O(N) scan operation
 - Never call roomStore.startGame() for JT games — JT bypasses roomStore game state
 - Never use git filter-branch — use git filter-repo instead
 - Never add Tailwind classes to @cards/ui components — use inline CSS from @cards/theme only
 - Never put position:fixed overlays inside GameLayout — they belong outside the component tree
+- Never cross-import between server game handler folders (BQ handlers must not import JT services)

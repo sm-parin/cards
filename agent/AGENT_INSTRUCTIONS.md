@@ -7,8 +7,7 @@
 ## STEP 0 — Load context first
 
 Read in order:
-1. `cards/AGENTS.md` — current platform state
-2. `cards/docs/WRITING_GUIDE.md` — doc format rules
+1. `agent/AGENTS.md` — current platform state
 
 Confirm: "Context loaded. [branch type] — [task in 5 words]."
 Then proceed.
@@ -126,11 +125,9 @@ Nothing after the block.
 
 ---
 
-## RULE 5 — Documentation is mandatory
+## RULE 5 — Documentation (triggered per INSTRUCTION 2)
 
-Session is not complete without this. Not optional.
-
-### 5a — Overwrite AGENTS.md
+### 5a — Overwrite agent/AGENTS.md
 
 Replace entire file. Never append.
 Current state only. No history. No prose.
@@ -138,26 +135,26 @@ Dense facts only. Every line = information an agent needs.
 
 ### 5b — Create session file
 
-Path: `cards/docs/sessions/YYYY-MM-DD-[3-word-slug].md`
+Path: `docs/sessions/YYYY-MM-DD-[3-word-slug].md`
 
-Follow format in `cards/docs/WRITING_GUIDE.md` exactly.
+Follow format in `docs/WRITING_GUIDE.md` exactly (read in Step 6).
 Fill every section. No placeholders.
 "What a future agent needs to know" → min 3 specific non-obvious points.
 
 ### 5c — ADR if needed
 
-Significant architectural choice made → create `cards/docs/decisions/NNN-[slug].md`
+Significant architectural choice made → create `docs/decisions/NNN-[slug].md`
 No architectural choice → skip, state so.
 
 ### 5d — Issue record if needed
 
-Bug found and fixed → create `cards/docs/issues/[slug].md`
+Bug found and fixed → create `docs/issues/[slug].md`
 No bugs → skip, state so.
 
 ### 5e — Architecture docs if needed
 
 Topology / auth / schema / packages / deployment changed →
-update relevant file in `cards/docs/architecture/`
+update relevant file in `docs/architecture/`
 Nothing structural changed → skip, state so.
 
 ---
@@ -178,7 +175,7 @@ You:
 Run in this exact order every time:
 
 ```
-0  Read AGENTS.md + WRITING_GUIDE.md
+0  Read agent/AGENTS.md
    Confirm context loaded
 
 1  Create branch
@@ -203,8 +200,9 @@ Run in this exact order every time:
    Report output
    List errors + resolutions
 
-6  Documentation (Rule 5)
-   5a Overwrite AGENTS.md
+6  Documentation (Rule 5 — triggers per INSTRUCTION 2 when code/arch changed)
+   Read docs/WRITING_GUIDE.md — file formats reference
+   5a Overwrite agent/AGENTS.md
    5b Create session file
    5c ADR if needed
    5d Issue record if needed
@@ -253,10 +251,5 @@ Format: use **User:** and **Agent:** headers, separated by a blank line.
 Append only — never overwrite existing content.
 
 ### INSTRUCTION 2 — Update docs at end of each exchange
-At the end of every exchange where code or architecture changed, update relevant docs:
-- Overwrite `agent/AGENTS.md` with current state
-- Create/update session file in `docs/sessions/`
-- Create ADR in `docs/decisions/` if architectural choice was made
-- Create issue record in `docs/issues/` if bug was fixed
-- Update `docs/architecture/` if topology/auth/schema/packages/deployment changed
+At the end of every exchange where code or architecture changed, execute RULE 5 (all 5a–5e steps).
 Do this alongside CHAT.md — both happen at the end of every exchange.
