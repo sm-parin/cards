@@ -9,7 +9,6 @@
 Read in order:
 1. `cards/AGENTS.md` — current platform state
 2. `cards/docs/WRITING_GUIDE.md` — doc format rules
-3. `cards/docs/agent-instructions.md` — additional rules added via ADD INSTRUCTION (if file exists)
 
 Confirm: "Context loaded. [branch type] — [task in 5 words]."
 Then proceed.
@@ -169,9 +168,8 @@ I send: "ADD INSTRUCTION: [rule]"
 
 You:
 1. Acknowledge the rule
-2. Append it to `cards/docs/agent-instructions.md` (create if missing)
+2. Append it to `agent/AGENT_INSTRUCTIONS.md` under the INSTRUCTIONS section below
 3. Apply immediately
-4. Read that file in Step 0 every future session
 
 ---
 
@@ -180,7 +178,7 @@ You:
 Run in this exact order every time:
 
 ```
-0  Read AGENTS.md + WRITING_GUIDE.md + agent-instructions.md
+0  Read AGENTS.md + WRITING_GUIDE.md
    Confirm context loaded
 
 1  Create branch
@@ -244,3 +242,21 @@ Task: [description]
 ```
 
 You: read context → confirm → create branch → plan → execute → verify → document → commit message.
+
+---
+
+## INSTRUCTIONS — Added via ADD INSTRUCTION protocol
+
+### INSTRUCTION 1 — Append chat to CHAT.md
+At the end of every exchange, append the user message and agent response to `docs/CHAT.md`.
+Format: use **User:** and **Agent:** headers, separated by a blank line.
+Append only — never overwrite existing content.
+
+### INSTRUCTION 2 — Update docs at end of each exchange
+At the end of every exchange where code or architecture changed, update relevant docs:
+- Overwrite `agent/AGENTS.md` with current state
+- Create/update session file in `docs/sessions/`
+- Create ADR in `docs/decisions/` if architectural choice was made
+- Create issue record in `docs/issues/` if bug was fixed
+- Update `docs/architecture/` if topology/auth/schema/packages/deployment changed
+Do this alongside CHAT.md — both happen at the end of every exchange.
