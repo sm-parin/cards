@@ -179,10 +179,20 @@ TypeScript: zero app-level errors across all three apps.
 
 ---
 
+**User:** ADD INSTRUCTION — give commit msg in code block
+
+**Agent:** Added INSTRUCTION 3 to `agent/AGENT_INSTRUCTIONS.md`: always write the commit message inside a code block (triple backticks), labelled `COMMIT MESSAGE`. The old "plain text" rule was in the deleted `docs/agent-instructions.md` and is now superseded.
+
 ---
 
 **User:** header is not persistent — shell has updated one but jack thief game does not and coins are still mismatching [screenshots]
 
 **Agent:** Investigated. Found that PlatformHeader already existed in @cards/ui and game GameHeaders already used it, but: (1) shell Header.tsx was still a custom implementation — replaced it with PlatformHeader; (2) both game next.config.ts were missing @cards/auth in transpilePackages, causing fetchMe to fail to compile — added it. Both game page.tsx already had fetchMe calls for fresh coins. Changes: shell Header.tsx, BQ next.config.ts, JT next.config.ts.
+
+---
+
+**User:** ADD INSTRUCTION — skip the branch creation process
+
+**Agent:** Added INSTRUCTION 4 to `agent/AGENT_INSTRUCTIONS.md`: never create a git branch, skip RULE 1 and Step 1 of the SESSION SEQUENCE, work directly on current branch.
 
 ---
