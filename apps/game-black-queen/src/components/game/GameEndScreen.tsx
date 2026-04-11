@@ -16,7 +16,7 @@
 
 import { useGameStore } from "@/store/gameStore";
 import { t } from "@/utils/i18n";
-import Button from "@/components/ui/Button";
+import { Button } from "@cards/ui";
 import { emitLeaveRoom } from "@/utils/socketEmitter";
 
 export default function GameEndScreen() {

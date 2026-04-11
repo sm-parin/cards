@@ -4,7 +4,7 @@
 // Shared types and constants across the cards platform.
 
 // ---------------------------------------------------------------------------
-// Domain types
+// Card primitives
 // ---------------------------------------------------------------------------
 
 /**
@@ -14,6 +14,18 @@
  */
 export type Card = string;
 
+/** Unicode suit character used in card strings. */
+export type Suit = '♥' | '♣' | '♦' | '♠';
+
+// ---------------------------------------------------------------------------
+// Room primitives
+// ---------------------------------------------------------------------------
+
+export type RoomStatus = 'waiting' | 'playing';
+
+// ---------------------------------------------------------------------------
+// Domain types
+// ---------------------------------------------------------------------------
 /**
  * Minimal shared Room interface. Both BQ Room and JT JtRoom satisfy this.
  * Use in shared packages (game-sdk, ui) where the concrete game type is unknown.
@@ -178,4 +190,26 @@ export interface GameEndedPayload {
   coinDeltas: Record<string, number>;
   /** UUID of the persisted match record. */
   matchId: string;
+}
+
+// ---------------------------------------------------------------------------
+// Shared lobby / room payload types (used by both BQ and JT)
+// ---------------------------------------------------------------------------
+
+export interface PrivateRoomCreatedPayload {
+  roomId: string;
+  passkey: string;
+}
+
+/** A single entry in the lobby list returned by GET_LOBBIES → LOBBIES_LIST. */
+export interface LobbyEntry {
+  roomId: string;
+  creatorName: string;
+  playerCount: number;
+  maxPlayers: number;
+  isPrivate: boolean;
+}
+
+export interface LobbiesListPayload {
+  lobbies: LobbyEntry[];
 }

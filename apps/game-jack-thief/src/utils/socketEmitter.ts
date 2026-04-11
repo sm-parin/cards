@@ -1,12 +1,13 @@
 /**
  * Typed socket emitter functions for Jack Thief.
  *
- * All client→server socket emissions go through this module.
- * Components must NEVER call `socket.emit()` directly.
+ * Shared room/lobby emitters come from createRoomEmitters (@cards/game-sdk).
+ * JT-specific game events are defined below.
  */
 
 import socketInstance from "@/config/socket";
-import { JT_CLIENT_EVENTS, CLIENT_EVENTS } from "@/config/events";
+import { JT_CLIENT_EVENTS } from "@/config/events";
+import { createRoomEmitters } from "@cards/game-sdk";
 import type {
   JtStartGamePayload,
   JtDiscardPairPayload,
@@ -15,66 +16,20 @@ import type {
   JtReorderHandPayload,
 } from "@/types";
 
-const TOKEN_KEY = "jt_token";
+const _r = createRoomEmitters(socketInstance, "jt_token", 4);
 
-// ---------------------------------------------------------------------------
-// Token management
-// ---------------------------------------------------------------------------
-
-export function getToken(): string {
-  if (typeof window === "undefined") return "";
-  return localStorage.getItem(TOKEN_KEY) ?? "";
-}
-
-export function setToken(token: string): void {
-  if (typeof window !== "undefined") localStorage.setItem(TOKEN_KEY, token);
-}
-
-export function clearToken(): void {
-  if (typeof window !== "undefined") localStorage.removeItem(TOKEN_KEY);
-}
-
-// ---------------------------------------------------------------------------
-// Shared room events (reused from BQ infrastructure)
-// ---------------------------------------------------------------------------
-
-export const emitInitPlayer = (): void => {
-  socketInstance.emit(CLIENT_EVENTS.INIT_PLAYER);
-};
-
-export const emitPlayNow = (excludeRoomId?: string): void => {
-  socketInstance.emit(CLIENT_EVENTS.PLAY_NOW, {
-    ...(excludeRoomId ? { excludeRoomId } : {}),
-  });
-};
-
-export const emitCreatePrivateRoom = (maxPlayers = 4): void => {
-  socketInstance.emit(CLIENT_EVENTS.CREATE_PRIVATE_ROOM, { maxPlayers });
-};
-
-export const emitJoinPrivateRoom = (passkey: string): void => {
-  socketInstance.emit(CLIENT_EVENTS.JOIN_PRIVATE_ROOM, { passkey });
-};
-
-export const emitUpdateMaxPlayers = (roomId: string, maxPlayers: number): void => {
-  socketInstance.emit(CLIENT_EVENTS.UPDATE_MAX_PLAYERS, { roomId, maxPlayers });
-};
-
-export const emitLeaveRoom = (roomId: string): void => {
-  socketInstance.emit(CLIENT_EVENTS.LEAVE_ROOM, { roomId });
-};
-
-export const emitGetLobbies = (): void => {
-  socketInstance.emit(CLIENT_EVENTS.GET_LOBBIES);
-};
-
-export const emitCreatePublicLobby = (maxPlayers = 4): void => {
-  socketInstance.emit(CLIENT_EVENTS.CREATE_PUBLIC_LOBBY, { maxPlayers });
-};
-
-export const emitJoinPublicLobby = (roomId: string): void => {
-  socketInstance.emit(CLIENT_EVENTS.JOIN_PUBLIC_LOBBY, { roomId });
-};
+export const getToken              = _r.getToken;
+export const setToken              = _r.setToken;
+export const clearToken            = _r.clearToken;
+export const emitInitPlayer        = _r.emitInitPlayer;
+export const emitPlayNow           = _r.emitPlayNow;
+export const emitCreatePrivateRoom = _r.emitCreatePrivateRoom;
+export const emitJoinPrivateRoom   = _r.emitJoinPrivateRoom;
+export const emitUpdateMaxPlayers  = _r.emitUpdateMaxPlayers;
+export const emitLeaveRoom         = _r.emitLeaveRoom;
+export const emitGetLobbies        = _r.emitGetLobbies;
+export const emitCreatePublicLobby = _r.emitCreatePublicLobby;
+export const emitJoinPublicLobby   = _r.emitJoinPublicLobby;
 
 // ---------------------------------------------------------------------------
 // Jack-Thief game events

@@ -11,4 +11,10 @@ export { PlatformHeader }                  from './PlatformHeader';
 export type { PlatformHeaderProps }        from './PlatformHeader';
 export { GameLobby }                       from './GameLobby';
 export type { GameLobbyProps, LobbyEntry } from './GameLobby';
+export { GameHeader }                      from './GameHeader';
+export type { GameHeaderProps }            from './GameHeader';
+export { GameLobbyRoom }                   from './GameLobbyRoom';
+export type { GameLobbyRoomProps }         from './GameLobbyRoom';
+export { getSuit, getValue, getRank, isRed } from './cardUtils';
+
 

@@ -2,7 +2,7 @@
 
 import { useGameStore } from "@/store/gameStore";
 import { t } from "@/utils/i18n";
-import Button from "@/components/ui/Button";
+import { Button } from "@cards/ui";
 
 export default function GameEndScreen() {
   const room = useGameStore((s) => s.room);

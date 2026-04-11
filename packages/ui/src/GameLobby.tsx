@@ -3,15 +3,10 @@
 import { useState, useEffect } from 'react';
 import { colors, radii, typography } from '@cards/theme';
 import { useDebounce } from '@cards/hooks';
+import type { LobbyEntry } from '@cards/types';
 import { Button } from './Button';
 
-export interface LobbyEntry {
-  roomId: string;
-  creatorName: string;
-  playerCount: number;
-  maxPlayers: number;
-  isPrivate: boolean;
-}
+export type { LobbyEntry };
 
 export interface GameLobbyProps {
   // Game config

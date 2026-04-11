@@ -15,7 +15,7 @@
  */
 
 import { useState, useEffect } from "react";
-import Button from "@/components/ui/Button";
+import { Button } from "@cards/ui";
 import { t } from "@/utils/i18n";
 import { emitPlaceBid, emitPassBid } from "@/utils/socketEmitter";
 import {
@@ -82,7 +82,7 @@ export default function BidControls({ currentBid, deckCount, roomId }: Props) {
         <div className="flex items-center gap-3">
           {/* Decrement */}
           <Button
-            variant="outline"
+            variant="secondary"
             className="w-10 h-10 p-0 text-lg"
             onClick={decrease}
             disabled={!canDecrease}
@@ -98,7 +98,7 @@ export default function BidControls({ currentBid, deckCount, roomId }: Props) {
 
           {/* Increment */}
           <Button
-            variant="outline"
+            variant="secondary"
             className="w-10 h-10 p-0 text-lg"
             onClick={increase}
             disabled={!canIncrease}
@@ -112,7 +112,7 @@ export default function BidControls({ currentBid, deckCount, roomId }: Props) {
       {/* ── Quick-add buttons ─────────────────────────────────────────────── */}
       <div className="flex gap-2">
         <Button
-          variant="outline"
+          variant="secondary"
           className="flex-1 py-2 text-sm"
           onClick={() => addQuick(step)}
           disabled={amount + step > maxBid}
@@ -120,7 +120,7 @@ export default function BidControls({ currentBid, deckCount, roomId }: Props) {
           +{step}
         </Button>
         <Button
-          variant="outline"
+          variant="secondary"
           className="flex-1 py-2 text-sm"
           onClick={() => addQuick(step * 2)}
           disabled={amount + step * 2 > maxBid}
@@ -128,7 +128,7 @@ export default function BidControls({ currentBid, deckCount, roomId }: Props) {
           +{step * 2}
         </Button>
         <Button
-          variant="outline"
+          variant="secondary"
           className="flex-1 py-2 text-sm"
           onClick={() => addQuick(step * 3)}
           disabled={amount + step * 3 > maxBid}
@@ -142,7 +142,7 @@ export default function BidControls({ currentBid, deckCount, roomId }: Props) {
         <Button variant="primary" fullWidth onClick={handlePlaceBid} disabled={submitted}>
           {t("bidding.place_bid")}
         </Button>
-        <Button variant="outline" fullWidth onClick={handlePass} disabled={submitted}>
+        <Button variant="secondary" fullWidth onClick={handlePass} disabled={submitted}>
           {t("bidding.pass")}
         </Button>
       </div>

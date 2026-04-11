@@ -3,15 +3,12 @@
  */
 
 // Re-export shared types
-export type { PlatformUser, RoomPlayer } from "@cards/types";
-import type { RoomPlayer } from "@cards/types";
-
-// ---------------------------------------------------------------------------
-// Card & Suit
-// ---------------------------------------------------------------------------
-
-export type Suit = "♥" | "♣" | "♦" | "♠";
-export type Card = string;
+export type {
+  Card, Suit, RoomStatus,
+  PlatformUser, RoomPlayer,
+  LobbyEntry, LobbiesListPayload, PrivateRoomCreatedPayload,
+} from "@cards/types";
+import type { RoomPlayer, Card, RoomStatus } from "@cards/types";
 
 // ---------------------------------------------------------------------------
 // Player
@@ -56,8 +53,6 @@ export interface JtGameState {
 // ---------------------------------------------------------------------------
 // Room
 // ---------------------------------------------------------------------------
-
-export type RoomStatus = "waiting" | "playing";
 
 export interface JtRoom {
   roomId: string;
@@ -175,23 +170,6 @@ export interface RejoinSuccessPayload {
 export interface RoomUpdatePayload {
   players: JtPlayer[];
   maxPlayers?: number;
-}
-
-export interface PrivateRoomCreatedPayload {
-  roomId: string;
-  passkey: string;
-}
-
-export interface LobbyEntry {
-  roomId: string;
-  creatorName: string;
-  playerCount: number;
-  maxPlayers: number;
-  isPrivate: boolean;
-}
-
-export interface LobbiesListPayload {
-  lobbies: LobbyEntry[];
 }
 
 // ---------------------------------------------------------------------------

@@ -9,21 +9,12 @@
  */
 
 // Re-export shared types from the platform package
-export type { GamePhase, PlatformUser, RoomPlayer, GameEndedPayload } from "@cards/types";
-import type { GamePhase, RoomPlayer } from "@cards/types";
-
-// ---------------------------------------------------------------------------
-// Card & Suit primitives
-// ---------------------------------------------------------------------------
-
-/** Unicode suit character used in card strings */
-export type Suit = "♥" | "♣" | "♦" | "♠";
-
-/**
- * A card represented as `value + suit`, e.g. `"Q♠"`, `"10♥"`, `"A♣"`.
- * Values: 2 3 4 5 6 7 8 9 10 J Q K A
- */
-export type Card = string;
+export type {
+  Card, Suit, RoomStatus,
+  GamePhase, PlatformUser, RoomPlayer, GameEndedPayload,
+  LobbyEntry, LobbiesListPayload, PrivateRoomCreatedPayload,
+} from "@cards/types";
+import type { GamePhase, RoomPlayer, Suit, Card, RoomStatus } from "@cards/types";
 
 // ---------------------------------------------------------------------------
 // Player
@@ -103,8 +94,6 @@ export interface GameState {
 // Room
 // ---------------------------------------------------------------------------
 
-export type RoomStatus = "waiting" | "playing";
-
 export interface Room {
   roomId: string;
   players: Player[];
@@ -131,11 +120,6 @@ export interface RejoinSuccessPayload {
 export interface RoomUpdatePayload {
   players: Player[];
   maxPlayers?: number;
-}
-
-export interface PrivateRoomCreatedPayload {
-  roomId: string;
-  passkey: string;
 }
 
 export interface GameStartedPayload {
@@ -186,23 +170,6 @@ export interface StackResultPayload {
 
 export interface ErrorPayload {
   message: string;
-}
-
-// ---------------------------------------------------------------------------
-// Lobby types
-// ---------------------------------------------------------------------------
-
-/** A single entry in the lobby list */
-export interface LobbyEntry {
-  roomId: string;
-  creatorName: string;
-  playerCount: number;
-  maxPlayers: number;
-  isPrivate: boolean;
-}
-
-export interface LobbiesListPayload {
-  lobbies: LobbyEntry[];
 }
 
 // ---------------------------------------------------------------------------

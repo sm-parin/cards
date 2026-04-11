@@ -11,7 +11,7 @@
  */
 
 import { useState } from "react";
-import Button from "@/components/ui/Button";
+import { Button } from "@cards/ui";
 import { t } from "@/utils/i18n";
 import { CARD_VALUES, SUITS } from "@/config/gameRules";
 import type { Suit, Card } from "@/types";

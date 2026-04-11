@@ -2,7 +2,7 @@
 # Overwrite this file completely at the end of every session.
 # Never append — always replace the full file.
 # Goal: give AI agents complete platform context in minimum tokens.
-# Last updated: 2026-04-11 — GameLobby shared component extracted to @cards/ui
+# Last updated: 2026-04-12 — full src/ deduplication: shared types, cardUtils, socket factory, room emitters
 
 ## Step 0 reading list (mandatory before any work)
 1. AGENTS.md (this file)
@@ -112,7 +112,9 @@ Redis checkpointed only at: createRoom, joinRoom, startGame, deleteRoom.
                  decodeToken(), isTokenExpired(); types: AuthUser, AuthResponse, TokenPayload
 @cards/config  — GAME_CONFIG (black-queen + jack-thief entries with url/tokenKey/displayName/
                  minPlayers/maxPlayers); types: GameType, GameConfig
-@cards/types   — Card (string alias), Room, RoomPlayer, PlatformUser, GamePhase, JtGamePhase,
+@cards/types   — Card (string alias), Suit, RoomStatus, LobbyEntry, LobbiesListPayload,
+                 PrivateRoomCreatedPayload,
+                 Room, RoomPlayer, PlatformUser, GamePhase, JtGamePhase,
                  CLIENT_EVENTS, SERVER_EVENTS, JT_CLIENT_EVENTS, JT_SERVER_EVENTS,
                  GameEndedPayload, JtGameEndedPayload
 @cards/i18n    — t(key, interpolations?, locale?), registerGameTranslations(locale, translations);
@@ -121,16 +123,25 @@ Redis checkpointed only at: createRoom, joinRoom, startGame, deleteRoom.
                  useLocalStorage, useDebounce
 @cards/theme   — colors, spacing, radii, typography, animation, zIndex (all as const objects)
 @cards/ui      — Card, CardHand, PlayerSeat, TurnTimer, CoinDisplay, Toast, Button,
-                 RoomPlayerList, GameLayout, PlatformHeader, GameLobby
+                 RoomPlayerList, GameLayout, PlatformHeader, GameLobby, GameHeader, GameLobbyRoom,
+                 getSuit, getValue, getRank, isRed  (shared card primitive utils)
                  PlatformHeader: shared header (userId, displayName, coins, shellUrl, onLogout, onAvatarClick)
+                 GameHeader: prop-based header wrapper — authUser, shellUrl, onLogout; derives displayName
+                   internally. Game shared/GameHeader.tsx is a thin store-connected wrapper around this.
                  GameLayout: slot-based game table shell (header/opponents/table/gameInfo/hand)
                  GameLobby: two-column HomeScreen shell (minPlayers, maxPlayers, title, subtitle, lobbies,
                    pending, [label props], onMatchmake, onCreatePublicLobby, onCreatePrivateRoom,
                    onJoinPublicLobby, onJoinPrivateRoom, onRefresh); exports LobbyEntry type
-                 PlayerSeat props: username, cardCount, isMyTurn (yellow ring = pick target),
-                   isSelectable (blue ring + glow = clickable as Phase1 target), isConnected, onClick
+                 GameLobbyRoom: pre-game waiting room (room, selfId, passkey, playerOptions,
+                   minPlayersToStart, [label props], onStart, onLeave, onMatchAgain, onChangeMaxPlayers).
+                   Renders RoomPlayerList, player-count picker chips (accent=selected), passkey (creator only).
+                 PlayerSeat props: username, cardCount, isMyTurn, isSelectable, isConnected, onClick
+                 Button: variant=primary|secondary|ghost|danger. ALL game files use @cards/ui Button —
+                   NO local Button components exist. variant="outline" → "secondary".
 @cards/game-sdk — createGameSocket(tokenKey, serverUrl), getSocket(), destroySocket(),
-                  useGameConnection(), useRoom<T extends Room>(), useSelf()
+                  useGameConnection(), useRoom<T extends Room>(), useSelf(),
+                  createRoomEmitters(socket, tokenKey, defaultMaxPlayers=5) → RoomEmitters
+                  (12 shared fns: getToken/setToken/clearToken + 9 room/lobby emitters)
 
 ## Shell header
 apps/shell/src/components/Header.tsx — thin wrapper around PlatformHeader.
@@ -240,7 +251,7 @@ Must cover packages/* too — @cards/ui and @cards/game-sdk have internal worksp
 ## Adding a new game — required steps
 1. Create apps/game-{name}/ — Next.js app, assign next available port (3004+)
 2. Add entry to packages/config/src/index.ts in GAME_CONFIG
-3. Create apps/game-{name}/src/config/socket.ts — io() with dynamic auth callback reading tokenKey from localStorage
+3. Create apps/game-{name}/src/config/socket.ts — use createGameSocket(tokenKey, appConfig.socketUrl) from @cards/game-sdk
 4. Add game-specific socket handlers in apps/server/src/sockets/{name}Handler.js
 5. Register new handlers in apps/server/src/sockets/index.js onConnection()
 6. Create apps/game-{name}/vercel.json — copy from game-jack-thief/vercel.json, update filter name
@@ -248,19 +259,30 @@ Must cover packages/* too — @cards/ui and @cards/game-sdk have internal worksp
 8. Add NEXT_PUBLIC_SOCKET_URL + NEXT_PUBLIC_SHELL_URL to game Vercel env vars
 9. Update CORS_ORIGIN on Render to include the new game's Vercel URL → save (auto-redeploys)
 10. Add new game's packages to next.config.ts transpilePackages array
-11. Use GameLayout from @cards/ui for the playing screen shell
+11. Use GameLayout from @cards/ui for playing screen; GameLobby/GameLobbyRoom for home/lobby screens
+12. Use Button from @cards/ui — no local Button. No local PlayerList — use RoomPlayerList in GameLobbyRoom.
 See docs/architecture/adding-a-game.md for full annotated checklist.
 
-## HomeScreen layout (BQ + JT)
-Both games now use `GameLobby` from `@cards/ui` — a single shared component.
-Both HomeScreens (`apps/game-*/src/components/home/HomeScreen.tsx`) are thin wrappers (~50 lines each).
-Wrappers pass: `minPlayers`, `maxPlayers`, game title/subtitle, `lobbies` from store, `pending` state,
-translated labels, and locked callbacks (5s auto-reset via pendingRef).
-`onJoinPublicLobby`, `onJoinPrivateRoom`, `onCreatePublicLobby`, etc. go through `lock()`.
-`GameLobby` handles all internal state: playerMax, search, filter, sort, verify flow.
-BQ: MIN=5, MAX=10. JT: MIN=2, MAX=13. Lobbies auto-fetched on mount via useEffect in wrapper.
-`LobbyEntry` type is defined and exported from `@cards/ui` (not game-local anymore — but both game
-types/index.ts still have their own copy; structural compatibility means no TS error).
+## Shared src/ patterns (both games follow this)
+config/socket.ts:      3 lines — createGameSocket(tokenKey, appConfig.socketUrl) from @cards/game-sdk
+utils/socketEmitter.ts: createRoomEmitters(socket, tokenKey, default) → destructured as named exports;
+                        game-specific emitters (BQ: START_GAME, PLACE_BID, etc.; JT: JT_START_GAME, etc.) added below
+utils/cardUtils.ts:    re-exports getSuit/getValue/getRank/isRed from @cards/ui; keeps game-specific Helper
+                        (BQ: getValidCards; JT: findPairsInHand)
+types/index.ts:        re-exports Suit, Card, RoomStatus, LobbyEntry, LobbiesListPayload,
+                        PrivateRoomCreatedPayload from @cards/types; local types remain (Player/Room, game payloads)
+
+## Shared components used in both games (all in @cards/ui)
+HomeScreen: `GameLobby` — two-column (left: actions, right: lobby table). Thin wrapper ~55 lines per game.
+LobbyScreen: `GameLobbyRoom` — pre-game waiting room. Thin wrapper ~40 lines per game.
+Header: `GameHeader` (shared) → `shared/GameHeader.tsx` (store wrapper) → PlatformHeader.
+  BQ renders GameHeader in layout.tsx (always visible); JT in AppView.tsx (hidden during gameplay).
+Button: imported from @cards/ui everywhere. variant=primary|secondary|ghost|danger (no "outline").
+PlayerList: replaced by RoomPlayerList from @cards/ui (renders within GameLobbyRoom).
+No game-specific `ui/Button.tsx` or `lobby/PlayerList.tsx` exist — deleted.
+
+BQ specifics: MIN=5, MAX=10, minPlayersToStart=room.maxPlayers (room must be full to start)
+JT specifics: MIN=2, MAX=13, minPlayersToStart=2 (can start with only 2 players)
 
 ## Known limitations
 - COIN SYSTEM DISABLED: updateCoins() calls commented out in matchRecorder.js and jackThiefHandler.js. coinDeltas payloads are always empty {}. Header coins display removed from PlatformHeader. GameEndScreen coin deltas hidden in both BQ and JT. Re-enable by uncommenting marked sections.

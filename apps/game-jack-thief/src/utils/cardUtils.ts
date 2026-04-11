@@ -1,40 +1,19 @@
 /**
  * Card utility functions for Jack Thief.
+ * Shared primitives are re-exported from @cards/ui.
+ * findPairsInHand is JT-specific.
  */
 
-import type { Card, Suit } from "@/types";
+export { getSuit, getRank, isRed } from "@cards/ui";
 
-/**
- * Extracts the suit from a card string (last character).
- * e.g. "Q♠" → "♠", "10♥" → "♥"
- */
-export function getSuit(card: Card): Suit | null {
-  const s = card.slice(-1);
-  if (s === "♥" || s === "♣" || s === "♦" || s === "♠") return s as Suit;
-  return null;
-}
-
-/**
- * Extracts the rank (value) from a card string (everything except the last character).
- * e.g. "Q♠" → "Q", "10♥" → "10", "J♣" → "J"
- */
-export function getRank(card: Card): string {
-  return card.slice(0, -1);
-}
-
-/**
- * Returns true if the card suit is red (♥ or ♦).
- */
-export function isRed(card: Card): boolean {
-  const s = getSuit(card);
-  return s === "♥" || s === "♦";
-}
+import type { Card } from "@/types";
+import { getRank } from "@cards/ui";
 
 /**
  * Finds all pairs in a hand (same rank).
  * With 4 cards of the same rank (2-deck game), returns two pairs.
  *
- * @returns Array of [card1, card2] index pairs
+ * @returns Array of [card1, card2] pairs
  */
 export function findPairsInHand(hand: Card[]): [Card, Card][] {
   const byRank: Record<string, Card[]> = {};

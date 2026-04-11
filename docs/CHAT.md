@@ -275,3 +275,39 @@ Key decision: active state styling uses `colors.accent` (gold) rather than game-
 Updated: `packages/ui/src/index.ts` (exports), `agent/AGENTS.md`, `docs/sessions/2026-04-11-gamelobby-shared-component.md`.
 
 ---
+
+**User:** INITIATE — Check all components in both games. All which are written twice needs to be made reusable with proper props and used from packages.
+
+**Agent:** Audited all 35 component files across both games. Found 5 cross-game duplicates and eliminated them all.
+
+**Extracted to `@cards/ui`:**
+- `packages/ui/src/GameHeader.tsx` — prop-driven header (authUser, shellUrl, onLogout); derives displayName. Both game `shared/GameHeader.tsx` → thin store wrappers (~15 lines each).
+- `packages/ui/src/GameLobbyRoom.tsx` — shared pre-game waiting room (room, selfId, passkey, playerOptions, minPlayersToStart + label props + callbacks). Inline CSS. Uses `Button` + `RoomPlayerList` from same package. Both game `lobby/LobbyScreen.tsx` → thin wrappers (~40 lines each). BQ: minPlayersToStart=room.maxPlayers; JT: minPlayersToStart=2.
+
+**Deleted:** both game `lobby/PlayerList.tsx` (replaced by `RoomPlayerList` in `GameLobbyRoom`), both game `ui/Button.tsx` (all imports → `{ Button }` from `@cards/ui`; variant "outline" → "secondary").
+
+Files updated for Button: BQ GameEndScreen, BidControls, PartnerCardSelector; JT GameEndScreen.
+
+Updated: `packages/ui/src/index.ts`, `agent/AGENTS.md`, `docs/sessions/2026-04-12-component-extraction.md`.
+
+---
+
+**User:** INITIATE — do the same for any other files within /src of both the games
+
+**Agent:** Audited all non-component `src/` files. Found 4 categories of duplication; extracted what was extractable and skipped what was too complex or game-specific.
+
+**New: `packages/ui/src/cardUtils.ts`** — `getSuit`, `getValue`, `getRank` (alias), `isRed`. Both game `utils/cardUtils.ts` now re-export these from `@cards/ui` and keep only their game-specific helper (`getValidCards` in BQ, `findPairsInHand` in JT).
+
+**New: `packages/game-sdk/src/roomEmitters.ts`** — `createRoomEmitters(socket, tokenKey, defaultMaxPlayers)` factory returning 12 shared functions (token management + 9 room/lobby emitters). Both game `utils/socketEmitter.ts` now call this and destructure into named exports, keeping only game-specific emitters below.
+
+**Updated: `packages/types/src/index.ts`** — added `Suit`, `RoomStatus`, `LobbyEntry`, `LobbiesListPayload`, `PrivateRoomCreatedPayload`. Both game `types/index.ts` now re-export these from `@cards/types` instead of defining locally.
+
+**Updated: `packages/ui/src/GameLobby.tsx`** — `LobbyEntry` now imported from `@cards/types` instead of defined locally; re-exported for backwards compat.
+
+**Both game `config/socket.ts`** — replaced 30-line `io()` setup with 3-line `createGameSocket(tokenKey, appConfig.socketUrl)` from `@cards/game-sdk`.
+
+**Skipped:** `utils/i18n.ts` (already shims), `config/events.ts` (already shims), `app/page.tsx` (behaviors differ), `store/gameStore.ts` (complex Zustand generics), `hooks/useSocket.ts` (too tangled).
+
+Updated: `packages/game-sdk/src/index.ts`, `packages/ui/src/index.ts`, `agent/AGENTS.md`, `docs/sessions/2026-04-12-component-extraction.md`.
+
+---
