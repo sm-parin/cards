@@ -246,4 +246,32 @@ Docs: `agent/AGENTS.md` updated, `docs/sessions/2026-04-11-coin-system-disabled.
 
 ---
 
+**User:** INITIATE — revamping games' main pages. Two-column layout: left (matchmake, player stepper + slider, create public/private). Right (lobby table with search, filters, sort). Lobby/room name format. Verify button for private rooms. Remove inline user info bar.
+
+**Agent:** Revamped both BQ and JT HomeScreens simultaneously.
+
+Server: `roomHandler.js` `handleGetLobbies` now returns all waiting rooms (public + private) with `isPrivate` field, sorted by fill rate descending.
+
+Types: Added `isPrivate: boolean` to `LobbyEntry` in both games' `src/types/index.ts`.
+
+Both HomesScreens rewritten with: left panel (w-72, matchmake + `−/+` stepper + range slider + Create Public Lobby + Create Private Room), right panel (search bar w/ debounce 300ms + × clear, filter chips Private/Public/Players + sort select, full lobby table). Lobby display name = `{creatorName}'s lobby/room`. Private rooms show Verify → 6-digit input + × → Join (calls emitJoinPrivateRoom). Inline user info bar removed. Height `calc(100dvh - 57px)` for proper scroll. `useDebounce` from `@cards/hooks`.
+
+BQ: MIN=5, MAX=10. JT: MIN=2, MAX=13. Lobbies auto-fetched on mount via useEffect.
+
+Docs: `agent/AGENTS.md` updated, `docs/sessions/2026-04-11-homescreen-revamp.md` created.
+
+---
+
+**User:** INITIATE — considering both of these home screens follow the same pattern... can we not create a reusable component in packages?
+
+**Agent:** Extracted both HomeScreens into `packages/ui/src/GameLobby.tsx` — a fully self-contained shared component with inline CSS only (no Tailwind). Exports `GameLobby`, `GameLobbyProps`, and `LobbyEntry`.
+
+New file: `packages/ui/src/GameLobby.tsx` — all HomeScreen logic (stepper, debounced search, filter chips, sort, verify flow, hover state) encapsulated. Labels accepted as props with English fallbacks. Hover handled via `hoveredRow` state + `onMouseEnter/Leave`. Uses `useDebounce` from `@cards/hooks` (already a dep of `@cards/ui`).
+
+Both game HomeScreens reduced to ~55-line thin wrappers passing game-specific config (`MIN_PLAYERS`/`MAX_PLAYERS`), store data, translated labels, and locked callbacks. `pending` + `lock()` stay in each wrapper since the lock mechanism is tied to network calls.
+
+Key decision: active state styling uses `colors.accent` (gold) rather than game-specific primary — shared component must use platform tokens.
+
+Updated: `packages/ui/src/index.ts` (exports), `agent/AGENTS.md`, `docs/sessions/2026-04-11-gamelobby-shared-component.md`.
+
 ---

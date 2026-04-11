@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useRef } from "react";
-import Button from "@/components/ui/Button";
+import { useState, useRef, useEffect } from "react";
+import { GameLobby } from "@cards/ui";
 import { t } from "@/utils/i18n";
 import {
   emitPlayNow,
@@ -10,30 +10,20 @@ import {
   emitCreatePrivateRoom,
   emitJoinPrivateRoom,
   emitGetLobbies,
-  clearToken,
 } from "@/utils/socketEmitter";
 import { useGameStore } from "@/store/gameStore";
 
-// Jack Thief supports 2–13 players
-const PLAYER_OPTIONS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
-const DEFAULT_MAX = 4;
+const MIN_PLAYERS = 2;
+const MAX_PLAYERS = 13;
 
 export default function HomeScreen() {
   const pendingRef = useRef(false);
   const [pending, setPending] = useState(false);
-  const [pubMax, setPubMax] = useState(DEFAULT_MAX);
-  const [privMax, setPrivMax] = useState(DEFAULT_MAX);
-  const [privCode, setPrivCode] = useState("");
-  const [showLobbies, setShowLobbies] = useState(false);
-
   const lobbies = useGameStore((s) => s.lobbies);
-  const authUser = useGameStore((s) => s.authUser);
 
-  const handleLogout = () => {
-    clearToken();
-    const shellUrl = process.env.NEXT_PUBLIC_SHELL_URL || "http://localhost:3000";
-    window.location.href = shellUrl;
-  };
+  useEffect(() => {
+    emitGetLobbies();
+  }, []);
 
   const lock = () => {
     if (pendingRef.current) return false;
@@ -44,164 +34,24 @@ export default function HomeScreen() {
   };
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-background px-4 py-8">
-      {/* Header */}
-      <div className="flex flex-col items-center gap-2 mb-8 text-center">
-        <h1 className="text-4xl font-bold tracking-tight text-foreground">
-          {t("home.title")}
-        </h1>
-        <p className="text-base text-muted leading-relaxed max-w-sm">
-          {t("home.subtitle")}
-        </p>
-      </div>
-
-      {/* User info bar */}
-      {authUser && (
-        <div className="flex items-center justify-between w-full max-w-2xl mb-2 px-1">
-          <span className="text-sm text-muted">
-            <span className="text-foreground font-medium">{authUser.username}</span>
-            {" · "}
-            <span>{authUser.coins} coins</span>
-          </span>
-          <button
-            onClick={handleLogout}
-            className="text-xs text-muted hover:text-foreground transition-colors"
-          >
-            {t("auth.logout")}
-          </button>
-        </div>
-      )}
-
-      <div className="flex flex-col sm:flex-row gap-6 w-full max-w-2xl">
-        {/* ── Public ── */}
-        <section className="flex flex-col gap-4 flex-1 bg-surface border border-border rounded-2xl p-5">
-          <h2 className="text-lg font-semibold text-foreground">{t("home.public_section")}</h2>
-
-          <Button variant="primary" fullWidth onClick={() => { if (!lock()) return; emitPlayNow(); }} disabled={pending}>
-            {pending ? t("common.loading") : t("home.matchmake")}
-          </Button>
-
-          <div className="flex flex-col gap-2">
-            <span className="text-xs text-muted font-medium uppercase tracking-wide">{t("home.max_players_label")}</span>
-            <div className="flex flex-wrap gap-1">
-              {PLAYER_OPTIONS.map((n) => (
-                <button
-                  key={n}
-                  onClick={() => setPubMax(n)}
-                  className={`w-8 h-8 rounded-lg border text-xs font-semibold transition-colors ${
-                    pubMax === n
-                      ? "bg-primary text-white border-primary"
-                      : "bg-background text-muted border-border hover:border-primary"
-                  }`}
-                >
-                  {n}
-                </button>
-              ))}
-            </div>
-            <Button variant="outline" fullWidth onClick={() => { if (!lock()) return; emitCreatePublicLobby(pubMax); }} disabled={pending}>
-              {t("home.create_public_lobby")}
-            </Button>
-          </div>
-
-          <div className="flex flex-col gap-2">
-            {!showLobbies ? (
-              <Button variant="outline" fullWidth onClick={() => { setShowLobbies(true); emitGetLobbies(); }}>
-                {t("home.browse_lobbies")}
-              </Button>
-            ) : (
-              <>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted font-medium uppercase tracking-wide">{t("home.browse_lobbies")}</span>
-                  <button onClick={() => emitGetLobbies()} className="text-xs text-primary hover:underline">{t("home.refresh")}</button>
-                </div>
-                {lobbies.length === 0 ? (
-                  <p className="text-xs text-muted text-center py-3">{t("home.no_lobbies")}</p>
-                ) : (
-                  <table className="w-full text-sm border-collapse">
-                    <thead>
-                      <tr className="text-xs text-muted text-left border-b border-border">
-                        <th className="pb-1 pr-2 font-medium">{t("home.lobby_col_room")}</th>
-                        <th className="pb-1 pr-2 font-medium">{t("home.lobby_col_creator")}</th>
-                        <th className="pb-1 pr-2 font-medium">{t("home.lobby_col_players")}</th>
-                        <th className="pb-1" />
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {lobbies.map((lobby) => (
-                        <tr key={lobby.roomId} className="border-b border-border last:border-0">
-                          <td className="py-1.5 pr-2 font-mono text-foreground text-xs">{lobby.roomId}</td>
-                          <td className="py-1.5 pr-2 text-foreground">{lobby.creatorName}</td>
-                          <td className="py-1.5 pr-2 text-foreground">{lobby.playerCount}/{lobby.maxPlayers}</td>
-                          <td className="py-1.5">
-                            <button
-                              onClick={() => { if (!lock()) return; emitJoinPublicLobby(lobby.roomId); }}
-                              disabled={pending}
-                              className="text-xs text-primary font-semibold hover:underline disabled:opacity-50"
-                            >
-                              {t("home.join_lobby")}
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-              </>
-            )}
-          </div>
-        </section>
-
-        {/* ── Private ── */}
-        <section className="flex flex-col gap-4 flex-1 bg-surface border border-border rounded-2xl p-5">
-          <h2 className="text-lg font-semibold text-foreground">{t("home.private_section")}</h2>
-
-          <div className="flex flex-col gap-2">
-            <span className="text-xs text-muted font-medium uppercase tracking-wide">{t("home.max_players_label")}</span>
-            <div className="flex flex-wrap gap-1">
-              {PLAYER_OPTIONS.map((n) => (
-                <button
-                  key={n}
-                  onClick={() => setPrivMax(n)}
-                  className={`w-8 h-8 rounded-lg border text-xs font-semibold transition-colors ${
-                    privMax === n
-                      ? "bg-primary text-white border-primary"
-                      : "bg-background text-muted border-border hover:border-primary"
-                  }`}
-                >
-                  {n}
-                </button>
-              ))}
-            </div>
-            <Button variant="primary" fullWidth onClick={() => { if (!lock()) return; emitCreatePrivateRoom(privMax); }} disabled={pending}>
-              {pending ? t("common.loading") : t("home.create_room")}
-            </Button>
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <span className="text-xs text-muted font-medium uppercase tracking-wide">{t("home.join_private")}</span>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                maxLength={6}
-                placeholder={t("home.join_code_placeholder")}
-                value={privCode}
-                onChange={(e) => setPrivCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                disabled={pending}
-                className="flex-1 rounded-xl border border-border bg-background text-foreground px-4 py-2 text-sm font-mono tracking-widest placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
-              />
-              <Button
-                variant="outline"
-                onClick={() => { if (privCode.length !== 6) return; if (!lock()) return; emitJoinPrivateRoom(privCode); }}
-                disabled={pending || privCode.length !== 6}
-              >
-                {t("home.join")}
-              </Button>
-            </div>
-          </div>
-        </section>
-      </div>
-    </main>
+    <GameLobby
+      minPlayers={MIN_PLAYERS}
+      maxPlayers={MAX_PLAYERS}
+      title={t("home.title")}
+      subtitle={t("home.subtitle")}
+      lobbies={lobbies}
+      pending={pending}
+      matchmakeLabel={t("home.matchmake")}
+      createPublicLabel={t("home.create_public_lobby")}
+      createPrivateLabel={t("home.create_room")}
+      loadingLabel={t("common.loading")}
+      refreshLabel={t("home.refresh")}
+      onMatchmake={() => { if (!lock()) return; emitPlayNow(); }}
+      onCreatePublicLobby={(max) => { if (!lock()) return; emitCreatePublicLobby(max); }}
+      onCreatePrivateRoom={(max) => { if (!lock()) return; emitCreatePrivateRoom(max); }}
+      onJoinPublicLobby={(roomId) => { if (!lock()) return; emitJoinPublicLobby(roomId); }}
+      onJoinPrivateRoom={(passkey) => { if (!lock()) return; emitJoinPrivateRoom(passkey); }}
+      onRefresh={emitGetLobbies}
+    />
   );
 }

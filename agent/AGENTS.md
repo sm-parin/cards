@@ -2,7 +2,7 @@
 # Overwrite this file completely at the end of every session.
 # Never append — always replace the full file.
 # Goal: give AI agents complete platform context in minimum tokens.
-# Last updated: 2026-04-11 — coin system commented out (server + frontend)
+# Last updated: 2026-04-11 — GameLobby shared component extracted to @cards/ui
 
 ## Step 0 reading list (mandatory before any work)
 1. AGENTS.md (this file)
@@ -121,9 +121,12 @@ Redis checkpointed only at: createRoom, joinRoom, startGame, deleteRoom.
                  useLocalStorage, useDebounce
 @cards/theme   — colors, spacing, radii, typography, animation, zIndex (all as const objects)
 @cards/ui      — Card, CardHand, PlayerSeat, TurnTimer, CoinDisplay, Toast, Button,
-                 RoomPlayerList, GameLayout, PlatformHeader
+                 RoomPlayerList, GameLayout, PlatformHeader, GameLobby
                  PlatformHeader: shared header (userId, displayName, coins, shellUrl, onLogout, onAvatarClick)
                  GameLayout: slot-based game table shell (header/opponents/table/gameInfo/hand)
+                 GameLobby: two-column HomeScreen shell (minPlayers, maxPlayers, title, subtitle, lobbies,
+                   pending, [label props], onMatchmake, onCreatePublicLobby, onCreatePrivateRoom,
+                   onJoinPublicLobby, onJoinPrivateRoom, onRefresh); exports LobbyEntry type
                  PlayerSeat props: username, cardCount, isMyTurn (yellow ring = pick target),
                    isSelectable (blue ring + glow = clickable as Phase1 target), isConnected, onClick
 @cards/game-sdk — createGameSocket(tokenKey, serverUrl), getSocket(), destroySocket(),
@@ -247,6 +250,17 @@ Must cover packages/* too — @cards/ui and @cards/game-sdk have internal worksp
 10. Add new game's packages to next.config.ts transpilePackages array
 11. Use GameLayout from @cards/ui for the playing screen shell
 See docs/architecture/adding-a-game.md for full annotated checklist.
+
+## HomeScreen layout (BQ + JT)
+Both games now use `GameLobby` from `@cards/ui` — a single shared component.
+Both HomeScreens (`apps/game-*/src/components/home/HomeScreen.tsx`) are thin wrappers (~50 lines each).
+Wrappers pass: `minPlayers`, `maxPlayers`, game title/subtitle, `lobbies` from store, `pending` state,
+translated labels, and locked callbacks (5s auto-reset via pendingRef).
+`onJoinPublicLobby`, `onJoinPrivateRoom`, `onCreatePublicLobby`, etc. go through `lock()`.
+`GameLobby` handles all internal state: playerMax, search, filter, sort, verify flow.
+BQ: MIN=5, MAX=10. JT: MIN=2, MAX=13. Lobbies auto-fetched on mount via useEffect in wrapper.
+`LobbyEntry` type is defined and exported from `@cards/ui` (not game-local anymore — but both game
+types/index.ts still have their own copy; structural compatibility means no TS error).
 
 ## Known limitations
 - COIN SYSTEM DISABLED: updateCoins() calls commented out in matchRecorder.js and jackThiefHandler.js. coinDeltas payloads are always empty {}. Header coins display removed from PlatformHeader. GameEndScreen coin deltas hidden in both BQ and JT. Re-enable by uncommenting marked sections.

@@ -9,4 +9,6 @@ export { RoomPlayerList } from './RoomPlayerList';
 export { GameLayout }                      from './GameLayout';
 export { PlatformHeader }                  from './PlatformHeader';
 export type { PlatformHeaderProps }        from './PlatformHeader';
+export { GameLobby }                       from './GameLobby';
+export type { GameLobbyProps, LobbyEntry } from './GameLobby';
 

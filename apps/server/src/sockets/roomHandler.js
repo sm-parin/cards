@@ -179,13 +179,15 @@ function handleUpdateMaxPlayers(socket, io, payload) {
 
 function handleGetLobbies(socket) {
   const lobbies = getAllRooms()
-    .filter((r) => !r.isPrivate && r.status === 'waiting' && r.players.length < r.maxPlayers)
+    .filter((r) => r.status === 'waiting' && r.players.length < r.maxPlayers)
     .map((r) => ({
       roomId: r.roomId,
       creatorName: r.creatorName,
       playerCount: r.players.length,
       maxPlayers: r.maxPlayers,
-    }));
+      isPrivate: r.isPrivate,
+    }))
+    .sort((a, b) => (b.playerCount / b.maxPlayers) - (a.playerCount / a.maxPlayers));
 
   socket.emit(EVENTS.LOBBIES_LIST, { lobbies });
 }

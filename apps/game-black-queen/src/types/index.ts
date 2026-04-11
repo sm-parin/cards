@@ -192,12 +192,13 @@ export interface ErrorPayload {
 // Lobby types
 // ---------------------------------------------------------------------------
 
-/** A single entry in the public lobby list */
+/** A single entry in the lobby list */
 export interface LobbyEntry {
   roomId: string;
   creatorName: string;
   playerCount: number;
   maxPlayers: number;
+  isPrivate: boolean;
 }
 
 export interface LobbiesListPayload {

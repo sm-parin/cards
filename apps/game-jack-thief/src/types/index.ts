@@ -187,6 +187,7 @@ export interface LobbyEntry {
   creatorName: string;
   playerCount: number;
   maxPlayers: number;
+  isPrivate: boolean;
 }
 
 export interface LobbiesListPayload {
