@@ -9,6 +9,8 @@
   "packageManager": "pnpm@10.33.0",
   "workspaces": ["apps/*", "packages/*"],
   "devDependencies": {
+    "@types/react": "*",
+    "@types/react-dom": "*",
     "turbo": "^2.0.0"
   }
 }

@@ -196,3 +196,40 @@ TypeScript: zero app-level errors across all three apps.
 **Agent:** Added INSTRUCTION 4 to `agent/AGENT_INSTRUCTIONS.md`: never create a git branch, skip RULE 1 and Step 1 of the SESSION SEQUENCE, work directly on current branch.
 
 ---
+
+## Session: 2026-04-11 — Token optimization + JT bug fixes + 2-player features
+
+---
+
+**User:** Review agent/ and docs/ folders — structure okay? Format okay? What can be improved for token reduction? INITIATE reads all files in agent/ before work — want maximum token reduction.
+
+**Agent:** Audited all files loaded at INITIATE time (~1,448 lines). Key issues: docs/WRITING_GUIDE.md (732 lines) loaded at Step 0 but only needed at Step 6 (documentation phase); agent/AGENT_INSTRUCTIONS.md had a stale `docs/agent-instructions.md` path reference; AGENTS.md had redundant general conduct rules. Changes: moved `docs/GUIDE.md` out of agent/ so it is no longer loaded at INITIATE; removed WRITING_GUIDE.md from Step 0 reading list (now only loaded at Step 6); fixed stale path in AGENT_INSTRUCTIONS.md; trimmed AGENTS.md "What NOT to do" to platform-specific only. INITIATE token load reduced from ~1,448 to ~498 lines.
+
+---
+
+**User:** INITIATE / Issues [screenshots with 7 issues]:
+1. Header appearing twice
+2. Coins showing 0
+3. Page scrollable during game
+4. Single unpaired 10 card (impossible by game rules)
+5. Player auto-yellow and cannot be chosen
+6. Feature: header not visible while game active
+7. Feature: 2-player JT — skip player picking timer
+
+**Agent:** Fixed all 7 issues + a pre-existing `@types/react` build failure.
+
+1+3+6 (double header / scroll / header feature): Removed `<GameHeader />` from `layout.tsx`. Moved conditional render to `AppView.tsx` — shows header only when `!gameState` (HomeScreen + LobbyScreen). PlayingScreen passes `header={null}` to GameLayout. Scroll also fixed because GameLayout 100dvh no longer competes with an extra header.
+
+2 (coins 0): `page.tsx` was calling `setReady(true)` synchronously after creating the fetchMe promise. Moved `setReady(true)` inside `.finally()` so app waits for fetchMe before rendering. `.catch()` logs nothing — syncCoins from socket fires as fallback on fetchMe failure.
+
+4 (unpaired 10): `dealCards` in `jackThiefService.js` used `Math.floor(deck.length / playerCount)` which discards the remainder card with 2 players and 51 cards. If the discarded card was one of the four 10s, three 10s have no pairing partner for 1 player. Fixed with round-robin distribution (`deck[i % playerCount]`) — all 51 cards dealt, no card ever discarded.
+
+5 (auto-yellow not clickable): Added `isSelectable?: boolean` prop to `PlayerSeat` (blue ring + glow via `colors.info`). PlayingScreen passes `isSelectable={canSelectAsTarget}`. Yellow = current pick target; blue = clickable during Phase1.
+
+7 (2-player skip timer): `startSelectPlayerTimer` now checks if only 1 candidate; if so, calls `startBuffer` immediately and returns. `JT_SELECT_PLAYER_TIMER_START` is never emitted in 2-player games.
+
+@types/react build failure (pre-existing): pnpm v10 does not hoist packages, so `packages/*/src/` cannot find `apps/*/node_modules/@types/react`. Fixed by adding `@types/react` + `@types/react-dom` to root `package.json` devDependencies and `@types/react: "*"` to `packages/hooks/package.json`. Build confirmed passing.
+
+Files changed: `apps/game-jack-thief/src/app/layout.tsx`, `page.tsx`, `components/AppView.tsx`, `components/game/PlayingScreen.tsx`, `apps/server/src/services/jackThiefService.js`, `apps/server/src/sockets/jackThiefHandler.js`, `packages/ui/src/PlayerSeat.tsx`, `packages/hooks/package.json`, `package.json` (root).
+
+---

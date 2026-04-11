@@ -3,7 +3,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { appConfig } from "@/config";
 import SocketInitializer from "@/components/shared/SocketInitializer";
-import GameHeader from "@/components/shared/GameHeader";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,7 +30,6 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <GameHeader />
         <SocketInitializer>{children}</SocketInitializer>
       </body>
     </html>

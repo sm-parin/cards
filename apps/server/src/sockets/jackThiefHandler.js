@@ -94,12 +94,21 @@ function registerJackThiefHandlers(socket, io) {
 
 /**
  * Phase 1: Start 10s timer for current picker to select a target.
+ * If only one eligible player exists, skip Phase 1 entirely and auto-select immediately.
  * If target not selected in time, auto-selects a random active player (not self).
  */
 function startSelectPlayerTimer(io, roomId, state) {
   if (state.selectPlayerTimer) {
     clearTimeout(state.selectPlayerTimer);
     state.selectPlayerTimer = null;
+  }
+
+  const candidates = state.activePlayers.filter((id) => id !== state.currentPickerId);
+
+  // With only 1 eligible target (e.g. 2-player game), skip Phase 1 entirely
+  if (candidates.length === 1) {
+    startBuffer(io, roomId, state, state.currentPickerId, candidates[0]);
+    return;
   }
 
   io.to(roomId).emit(JT_EVENTS.JT_SELECT_PLAYER_TIMER_START, {
@@ -114,10 +123,10 @@ function startSelectPlayerTimer(io, roomId, state) {
     if (state.targetPlayerId !== null) return;
 
     // Pick a random active player that isn't the current picker
-    const candidates = state.activePlayers.filter((id) => id !== state.currentPickerId);
-    if (candidates.length === 0) return; // only 1 player left — game should already be over
+    const remaining = state.activePlayers.filter((id) => id !== state.currentPickerId);
+    if (remaining.length === 0) return; // only 1 player left — game should already be over
 
-    const autoTarget = candidates[Math.floor(Math.random() * candidates.length)];
+    const autoTarget = remaining[Math.floor(Math.random() * remaining.length)];
     startBuffer(io, roomId, state, state.currentPickerId, autoTarget);
   }, JT_RULES.SELECT_PLAYER_DURATION_MS);
 }

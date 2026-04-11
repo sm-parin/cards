@@ -60,18 +60,21 @@ function getRank(card) {
 // ---------------------------------------------------------------------------
 
 /**
- * Deals the deck as evenly as possible among players.
- * Any remainder cards are discarded (not dealt).
+ * Deals all cards round-robin among players.
+ * Some players receive one extra card when deck.length % playerIds.length !== 0 —
+ * this ensures NO card is discarded and every rank stays in play.
+ * With a JT deck (51 cards): each non-jack rank has 4 copies (always pairs up);
+ * jacks have 3 copies (1 pair discarded pre-game, 1 "thief" jack remains).
  *
  * @param {string[]} playerIds  - Ordered array of player IDs
  * @param {string[]} deck       - Pre-shuffled deck
  * @returns {{ [playerId: string]: string[] }}
  */
 function dealCards(playerIds, deck) {
-  const cardsPerPlayer = Math.floor(deck.length / playerIds.length);
   const hands = {};
-  playerIds.forEach((id, i) => {
-    hands[id] = deck.slice(i * cardsPerPlayer, (i + 1) * cardsPerPlayer);
+  playerIds.forEach((id) => { hands[id] = []; });
+  deck.forEach((card, i) => {
+    hands[playerIds[i % playerIds.length]].push(card);
   });
   return hands;
 }

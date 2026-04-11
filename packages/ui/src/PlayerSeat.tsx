@@ -6,6 +6,8 @@ interface PlayerSeatProps {
   isConnected?: boolean;
   isMyTurn?: boolean;
   isYou?: boolean;
+  /** Highlight as selectable/clickable target (blue ring) */
+  isSelectable?: boolean;
   /** Card count shown as badge */
   cardCount?: number;
   /** Card played this trick — shown as a small chip below avatar */
@@ -20,11 +22,25 @@ export function PlayerSeat({
   isConnected = true,
   isMyTurn = false,
   isYou = false,
+  isSelectable = false,
   cardCount,
   playedCard,
   onClick,
   className = '',
 }: PlayerSeatProps) {
+  const borderColor = isMyTurn
+    ? colors.myTurn
+    : isSelectable
+    ? colors.info
+    : isYou
+    ? colors.info
+    : colors.bgBorder;
+
+  const boxShadow = isMyTurn
+    ? `0 0 12px ${colors.myTurn}66`
+    : isSelectable
+    ? `0 0 8px ${colors.info}55`
+    : 'none';
   return (
     <div
       className={className}
@@ -44,7 +60,7 @@ export function PlayerSeat({
         width:          '48px',
         height:         '48px',
         borderRadius:   '50%',
-        border:         `2px solid ${isMyTurn ? colors.myTurn : isYou ? colors.info : colors.bgBorder}`,
+        border:         `2px solid ${borderColor}`,
         background:     colors.bgElevated,
         display:        'flex',
         alignItems:     'center',
@@ -52,7 +68,7 @@ export function PlayerSeat({
         fontSize:       '18px',
         fontWeight:     700,
         color:          colors.textPrimary,
-        boxShadow:      isMyTurn ? `0 0 12px ${colors.myTurn}66` : 'none',
+        boxShadow:      boxShadow,
         transition:     'border-color 200ms, box-shadow 200ms',
         position:       'relative',
       }}>

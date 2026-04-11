@@ -34,21 +34,25 @@ function PageContent() {
       try {
         const base64 = token.split('.')[1];
         const payload = JSON.parse(atob(base64.replace(/-/g, '+').replace(/_/g, '/')));
-        // Optimistic render from JWT while we fetch fresh coins
+        // Set identity immediately from JWT so socket can connect
         setAuthUser({ id: payload.userId, username: payload.username, email: payload.email, nickname: payload.nickname ?? null, coins: 0 });
-        fetchMe(token).then((fresh) => {
-          if (fresh) setAuthUser({ id: fresh.id, username: fresh.username, email: fresh.email, nickname: fresh.nickname ?? null, coins: fresh.coins });
-        });
+        // Fetch real coins from server before rendering; fall back gracefully on error
+        fetchMe(token)
+          .then((fresh) => {
+            if (fresh) setAuthUser({ id: fresh.id, username: fresh.username, email: fresh.email, nickname: fresh.nickname ?? null, coins: fresh.coins });
+          })
+          .catch(() => { /* server unavailable — keep 0 until syncCoins from socket fires */ })
+          .finally(() => setReady(true));
       } catch {
         // Malformed token — play as guest
         setAuthUser({ id: '', username: 'Guest', coins: 0 });
+        setReady(true);
       }
     } else {
       // No token — guest mode
       setAuthUser({ id: '', username: 'Guest', coins: 0 });
+      setReady(true);
     }
-
-    setReady(true);
   }, [searchParams, setAuthUser]);
 
   if (!ready) return null;

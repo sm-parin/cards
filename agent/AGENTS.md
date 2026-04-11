@@ -2,7 +2,7 @@
 # Overwrite this file completely at the end of every session.
 # Never append — always replace the full file.
 # Goal: give AI agents complete platform context in minimum tokens.
-# Last updated: 2026-04-10 — global header wired (PlatformHeader → all apps), coins fix, @cards/auth in transpilePackages
+# Last updated: 2026-04-11 — JT bug fixes + 2-player features, root @types/react, PlayerSeat isSelectable
 
 ## Step 0 reading list (mandatory before any work)
 1. AGENTS.md (this file)
@@ -124,6 +124,8 @@ Redis checkpointed only at: createRoom, joinRoom, startGame, deleteRoom.
                  RoomPlayerList, GameLayout, PlatformHeader
                  PlatformHeader: shared header (userId, displayName, coins, shellUrl, onLogout, onAvatarClick)
                  GameLayout: slot-based game table shell (header/opponents/table/gameInfo/hand)
+                 PlayerSeat props: username, cardCount, isMyTurn (yellow ring = pick target),
+                   isSelectable (blue ring + glow = clickable as Phase1 target), isConnected, onClick
 @cards/game-sdk — createGameSocket(tokenKey, serverUrl), getSocket(), destroySocket(),
                   useGameConnection(), useRoom<T extends Room>(), useSelf()
 
@@ -171,12 +173,23 @@ components/game/playing/Hand.tsx         — interactive hand (CardHand from @ca
 components/game/PlayerHand.tsx           — static hand for bidding/partner phases
 
 ## JT game — PlayingScreen slots
-opponents: PlayerSeat per non-self player, click = selectTarget when eligible
+header: null (hidden during game — header lives in AppView.tsx, only shown pre-game)
+opponents: PlayerSeat per non-self player, isSelectable={canSelectAsTarget}, click = selectTarget when eligible
 table: face-down cards of target player when pick window active; otherwise turn status
 gameInfo: picker/target status text + countdown + winners list
 hand: own hand with drag-rearrange + tap-pair-discard logic (Card from @cards/ui)
 
-## Socket events (most critical with payloads)
+## JT game — server behavior
+- `jackThiefService.dealCards` is round-robin (`deck[i % playerCount]`). ALL 51 cards dealt, no remainder discarded. If handSizes don't add up to deck.length, suspect deck creation bug, not dealCards.
+- `startSelectPlayerTimer` auto-skips Phase1 when `activePlayers.length === 2` (only 1 candidate). JT_SELECT_PLAYER_TIMER_START is never emitted in 2-player games.
+- JT game state lives in `jackThiefGames` Map only. deleteRoom() alone is insufficient — must also call jackThiefGames.delete(roomId).
+
+## JT game — frontend behavior
+- Header visibility controlled entirely by `AppView.tsx` — layout.tsx has no header. If you need header on game screens (PreGame, GameEnd), add it inside those components.
+- `page.tsx` blocks rendering until `fetchMe` resolves. setReady(true) is inside `.finally()`. Do NOT move it before finally — coins will briefly show 0.
+- Pair discard blocked when player is `targetPlayerId` and `pickTimer !== null`.
+
+
 INIT_PLAYER         client→server  {}                      triggers rejoin if player in a room
 ROOM_JOINED         server→client  { room }                player joined/created a room
 ROOM_UPDATE         server→client  { players }             any player list change
@@ -242,7 +255,7 @@ See docs/architecture/adding-a-game.md for full annotated checklist.
 - Only apps/server has a .env.example — no examples for shell or game apps
 - No automated tests anywhere in the codebase
 - @cards/auth API_URL default is localhost:3001 but server runs on 5000 — inconsistency in fallback values only; prod uses env vars so no runtime impact
-- @cards/ui packages ship raw TS — tsc on game apps will show React type errors for shared packages (pre-existing, not real errors; Next.js compiles them correctly via transpilePackages)
+- @cards/ui packages ship raw TS — root package.json devDependencies includes @types/react + @types/react-dom for monorepo-wide resolution (pnpm v10 does not hoist; per-app @types/react is in a sibling subtree, unreachable from packages/*/src/)
 
 ## What NOT to do
 General conduct rules → see HARD RULES in agent/AGENT_INSTRUCTIONS.md.

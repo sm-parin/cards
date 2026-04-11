@@ -6,7 +6,6 @@ import { t } from "@/utils/i18n";
 import { getRank } from "@/utils/cardUtils";
 import { emitJtPickCard, emitJtSelectTarget, emitJtReorderHand, emitJtDiscardPair } from "@/utils/socketEmitter";
 import { GameLayout, PlayerSeat, Card } from "@cards/ui";
-import GameHeader from "@/components/shared/GameHeader";
 
 const MAX_PICKS_CONSTRAINT = 3;
 
@@ -146,6 +145,7 @@ export default function PlayingScreen() {
               username={p.username}
               cardCount={handCount}
               isMyTurn={isThisTarget}
+              isSelectable={canSelectAsTarget}
               isConnected={isActive}
               onClick={canSelectAsTarget ? () => handleSelectTarget(p.id) : undefined}
             />
@@ -276,7 +276,7 @@ export default function PlayingScreen() {
 
   return (
     <GameLayout
-      header={<GameHeader />}
+      header={null}
       opponents={opponentsSlot}
       table={tableSlot}
       gameInfo={gameInfoSlot}
