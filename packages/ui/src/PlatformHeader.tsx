@@ -93,9 +93,11 @@ export function PlatformHeader({
           </a>
         ) : (
           <>
+            {/* COIN SYSTEM DISABLED
             <span style={{ fontSize: '14px', color: '#9ca3af' }}>
               {coins ?? 0} coins
             </span>
+            */}
             <div
               onClick={onAvatarClick}
               title={name}

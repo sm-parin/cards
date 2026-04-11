@@ -33,7 +33,7 @@ export default function GameEndScreen() {
   const biddingTeamIds = gameEndResult?.biddingTeam ?? [];
   const opponentTeamIds = gameEndResult?.opponentTeam ?? [];
   const players = room?.players ?? [];
-  const myDelta = gameEndResult?.coinDeltas?.[player?.id ?? ""] ?? 0;
+  const myDelta = gameEndResult?.coinDeltas?.[player?.id ?? ""] ?? 0; // COIN SYSTEM DISABLED — unused
 
   /** Resolve display name for a player ID */
   const resolveName = (id: string): string => {
@@ -70,6 +70,7 @@ export default function GameEndScreen() {
         </div>
 
         {/* ── Coin delta ────────────────────────────────────────────────── */}
+        {/* COIN SYSTEM DISABLED
         {myDelta !== 0 && (
           <p
             className={[
@@ -81,6 +82,7 @@ export default function GameEndScreen() {
             {myDelta} {t("end.coins")}
           </p>
         )}
+        */}
 
         {/* ── Score board ───────────────────────────────────────────────── */}
         {scores && (

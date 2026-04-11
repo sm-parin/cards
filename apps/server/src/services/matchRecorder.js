@@ -46,7 +46,7 @@ async function recordMatch({ roomId, winnerTeam, bidTarget, biddingTeam, opponen
         (winnerTeam === 'teamB' && opponentTeam.includes(id));
 
       const delta = isWinner ? WIN_DELTA : LOSS_DELTA;
-      coinDeltas[id] = delta;
+      // COIN SYSTEM DISABLED — coinDeltas[id] = delta;
 
       // Persist to match_players table
       await query(
@@ -55,8 +55,7 @@ async function recordMatch({ roomId, winnerTeam, bidTarget, biddingTeam, opponen
         [matchId, id, team, delta],
       ).catch(() => {}); // Skip if user is a guest (no DB row)
 
-      // Apply coin change
-      await updateCoins(id, delta, isWinner ? 'win' : 'loss', matchId).catch(() => {});
+      // COIN SYSTEM DISABLED — await updateCoins(id, delta, isWinner ? 'win' : 'loss', matchId).catch(() => {});
     }),
   );
 

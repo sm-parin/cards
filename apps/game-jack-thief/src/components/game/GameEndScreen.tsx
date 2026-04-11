@@ -13,7 +13,7 @@ export default function GameEndScreen() {
   if (!gameState) return null;
 
   const selfId = player?.id ?? null;
-  const { loser, winners, coinDeltas } = gameState;
+  const { loser, winners /* COIN SYSTEM DISABLED, coinDeltas */ } = gameState;
 
   const getUsername = (id: string) =>
     room?.players.find((p) => p.id === id)?.username ?? id;
@@ -53,11 +53,13 @@ export default function GameEndScreen() {
                   )}
                 </span>
               </div>
+              {/* COIN SYSTEM DISABLED
               <span className="text-danger font-bold font-mono">
                 {coinDeltas?.[loser] !== undefined
                   ? `${coinDeltas[loser] > 0 ? "+" : ""}${coinDeltas[loser]}`
                   : "-200"}
               </span>
+              */}
             </div>
           </div>
         )}
@@ -90,11 +92,13 @@ export default function GameEndScreen() {
                       )}
                     </span>
                   </div>
+                  {/* COIN SYSTEM DISABLED
                   <span className="text-success font-bold font-mono">
                     {coinDeltas?.[id] !== undefined
                       ? `+${coinDeltas[id]}`
                       : "+100"}
                   </span>
+                  */}
                 </li>
               ))}
             </ul>

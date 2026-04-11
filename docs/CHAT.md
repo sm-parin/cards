@@ -233,3 +233,17 @@ TypeScript: zero app-level errors across all three apps.
 Files changed: `apps/game-jack-thief/src/app/layout.tsx`, `page.tsx`, `components/AppView.tsx`, `components/game/PlayingScreen.tsx`, `apps/server/src/services/jackThiefService.js`, `apps/server/src/sockets/jackThiefHandler.js`, `packages/ui/src/PlayerSeat.tsx`, `packages/hooks/package.json`, `package.json` (root).
 
 ---
+
+**User:** INITIATE — Coin system not working as expected. COMMENT OUT THE ENTIRE COIN SYSTEM. We will get on this later.
+
+**Agent:** Commented out all coin system code across server and frontends. No code deleted — all marked `COIN SYSTEM DISABLED` for easy re-enablement.
+
+Server: `matchRecorder.js` — commented out `coinDeltas[id] = delta` and `updateCoins()` call. Match DB inserts still run. `jackThiefHandler.js` — commented out entire coinDeltas-building block + both `updateCoins()` calls in `checkAndEmitWinners`. Both still emit `coinDeltas: {}`.
+
+Frontend: `PlatformHeader.tsx` — commented out coins span (affects all apps). JT `GameEndScreen.tsx` — commented out `coinDeltas` destructure and all coin delta display spans. BQ `GameEndScreen.tsx` — commented out `myDelta !== 0` paragraph block.
+
+Docs: `agent/AGENTS.md` updated, `docs/sessions/2026-04-11-coin-system-disabled.md` created.
+
+---
+
+---

@@ -2,7 +2,7 @@
 # Overwrite this file completely at the end of every session.
 # Never append — always replace the full file.
 # Goal: give AI agents complete platform context in minimum tokens.
-# Last updated: 2026-04-11 — JT bug fixes + 2-player features, root @types/react, PlayerSeat isSelectable
+# Last updated: 2026-04-11 — coin system commented out (server + frontend)
 
 ## Step 0 reading list (mandatory before any work)
 1. AGENTS.md (this file)
@@ -249,6 +249,7 @@ Must cover packages/* too — @cards/ui and @cards/game-sdk have internal worksp
 See docs/architecture/adding-a-game.md for full annotated checklist.
 
 ## Known limitations
+- COIN SYSTEM DISABLED: updateCoins() calls commented out in matchRecorder.js and jackThiefHandler.js. coinDeltas payloads are always empty {}. Header coins display removed from PlatformHeader. GameEndScreen coin deltas hidden in both BQ and JT. Re-enable by uncommenting marked sections.
 - Mid-game state in server RAM only — server restart during active game loses all game state
 - Guest players cannot rejoin after disconnect (no stable ID)
 - JT game state in separate jackThiefGames Map (not room store) — deleteRoom alone is insufficient; jackThiefGames.delete(roomId) must also be called

@@ -543,22 +543,23 @@ async function checkAndEmitWinners(io, roomId, state) {
   const matchId = generateId();
   const coinDeltas = {};
 
-  for (const winnerId of state.winners) {
-    coinDeltas[winnerId] = JT_RULES.WIN_COINS;
-    try {
-      await updateCoins(winnerId, JT_RULES.WIN_COINS, 'jack_thief_win', matchId);
-    } catch (e) {
-      console.error(`Failed to update coins for winner ${winnerId}:`, e);
-    }
-  }
-  if (loser) {
-    coinDeltas[loser] = JT_RULES.LOSE_COINS;
-    try {
-      await updateCoins(loser, JT_RULES.LOSE_COINS, 'jack_thief_lose', matchId);
-    } catch (e) {
-      console.error(`Failed to update coins for loser ${loser}:`, e);
-    }
-  }
+  // COIN SYSTEM DISABLED
+  // for (const winnerId of state.winners) {
+  //   coinDeltas[winnerId] = JT_RULES.WIN_COINS;
+  //   try {
+  //     await updateCoins(winnerId, JT_RULES.WIN_COINS, 'jack_thief_win', matchId);
+  //   } catch (e) {
+  //     console.error(`Failed to update coins for winner ${winnerId}:`, e);
+  //   }
+  // }
+  // if (loser) {
+  //   coinDeltas[loser] = JT_RULES.LOSE_COINS;
+  //   try {
+  //     await updateCoins(loser, JT_RULES.LOSE_COINS, 'jack_thief_lose', matchId);
+  //   } catch (e) {
+  //     console.error(`Failed to update coins for loser ${loser}:`, e);
+  //   }
+  // }
 
   io.to(roomId).emit(JT_EVENTS.JT_GAME_ENDED, {
     loser,
