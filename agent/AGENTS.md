@@ -2,7 +2,7 @@
 # Overwrite this file completely at the end of every session.
 # Never append — always replace the full file.
 # Goal: give AI agents complete platform context in minimum tokens.
-# Last updated: 2026-04-12 — full src/ deduplication: shared types, cardUtils, socket factory, room emitters
+# Last updated: 2026-04-16 — shell platform UI: Homepage, Explore, GameInfo, RulesModal, LobbyPanel with socket integration
 
 ## Step 0 reading list (mandatory before any work)
 1. AGENTS.md (this file)
@@ -143,10 +143,30 @@ Redis checkpointed only at: createRoom, joinRoom, startGame, deleteRoom.
                   createRoomEmitters(socket, tokenKey, defaultMaxPlayers=5) → RoomEmitters
                   (12 shared fns: getToken/setToken/clearToken + 9 room/lobby emitters)
 
-## Shell header
-apps/shell/src/components/Header.tsx — thin wrapper around PlatformHeader.
-Passes useAuth() user data + router callbacks. No custom markup.
-Shell transpilePackages: @cards/ui, @cards/types, @cards/config, @cards/auth.
+## Shell structure and pages
+Entry: apps/shell/src/app/page.tsx
+Layout: apps/shell/src/app/layout.tsx — wraps all pages in AuthProvider, renders Header
+
+Shell pages:
+  /                  — Homepage: "Dream Cards" headline + "Explore Games" button
+  /explore           — Game grid: GAME_CONFIG entries as clickable cards (mobile 1-col, desktop 2-col)
+  /explore/[gameId]  — Game info page: left column (image/description/rules modal) + right column (LobbyPanel)
+  /login             — Login/register tabs (existing)
+  /profile           — User profile (existing)
+  /launch/[gameType] — Token relay: appends ?token= to game URL
+
+Key components:
+  Header.tsx         — Navigation: left (Cards logo), right (Explore + profile/guest icon)
+  RulesModal.tsx     — Multi-slide modal (How to Play, Scoring, Winning) with prev/next navigation
+  LobbyPanel.tsx     — Two-tab UI: Create Lobby (PRE/POST states) + Join Lobby (search, filter, sort)
+  config/socket.ts   — Socket.IO factory: getSocket() lazy-initializes with token auth
+
+Socket integration:
+  LobbyPanel emits: CREATE_PUBLIC_LOBBY, CREATE_PRIVATE_ROOM, LEAVE_ROOM, START_GAME, 
+                    GET_LOBBIES, JOIN_PUBLIC_LOBBY, PLAY_NOW
+  Listens to: ROOM_JOINED, ROOM_UPDATE, LOBBIES_LIST (+ shared room events)
+
+Shell transpilePackages: @cards/ui, @cards/types, @cards/config, @cards/auth, @cards/game-sdk
 
 ## Game transpilePackages
 Both game next.config.ts include: @cards/types, @cards/ui, @cards/auth, @cards/i18n, @cards/hooks, @cards/theme, @cards/game-sdk.
