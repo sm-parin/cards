@@ -23,70 +23,9 @@ importers:
       '@cards/auth':
         specifier: workspace:*
         version: link:../../packages/auth
-      '@cards/game-sdk':
+      '@cards/config':
         specifier: workspace:*
-        version: link:../../packages/game-sdk
-      '@cards/hooks':
-        specifier: workspace:*
-        version: link:../../packages/hooks
-      '@cards/i18n':
-        specifier: workspace:*
-        version: link:../../packages/i18n
-      '@cards/theme':
-        specifier: workspace:*
-        version: link:../../packages/theme
-      '@cards/types':
-        specifier: workspace:*
-        version: link:../../packages/types
-      '@cards/ui':
-        specifier: workspace:*
-        version: link:../../packages/ui
-      next:
-        specifier: 16.2.2
-        version: 16.2.2(@babel/core@7.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      react:
-        specifier: 19.2.4
-        version: 19.2.4
-      react-dom:
-        specifier: 19.2.4
-        version: 19.2.4(react@19.2.4)
-      socket.io-client:
-        specifier: ^4.8.3
-        version: 4.8.3
-      zustand:
-        specifier: ^5.0.12
-        version: 5.0.12(@types/react@19.2.14)(react@19.2.4)
-    devDependencies:
-      '@tailwindcss/postcss':
-        specifier: ^4
-        version: 4.2.2
-      '@types/node':
-        specifier: ^20
-        version: 20.19.39
-      '@types/react':
-        specifier: ^19
-        version: 19.2.14
-      '@types/react-dom':
-        specifier: ^19
-        version: 19.2.3(@types/react@19.2.14)
-      eslint:
-        specifier: ^9
-        version: 9.39.4(jiti@2.6.1)
-      eslint-config-next:
-        specifier: 16.2.2
-        version: 16.2.2(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3)
-      tailwindcss:
-        specifier: ^4
-        version: 4.2.2
-      typescript:
-        specifier: ^5
-        version: 5.9.3
-
-  apps/game-jack-thief:
-    dependencies:
-      '@cards/auth':
-        specifier: workspace:*
-        version: link:../../packages/auth
+        version: link:../../packages/config
       '@cards/game-sdk':
         specifier: workspace:*
         version: link:../../packages/game-sdk
@@ -139,6 +78,73 @@ importers:
       eslint-config-next:
         specifier: 16.2.2
         version: 16.2.2(@typescript-eslint/parser@8.58.0(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3)
+      tailwindcss:
+        specifier: ^4
+        version: 4.2.2
+      typescript:
+        specifier: ^5
+        version: 5.9.3
+
+  apps/game-jack-thief:
+    dependencies:
+      '@cards/auth':
+        specifier: workspace:*
+        version: link:../../packages/auth
+      '@cards/config':
+        specifier: workspace:*
+        version: link:../../packages/config
+      '@cards/game-sdk':
+        specifier: workspace:*
+        version: link:../../packages/game-sdk
+      '@cards/hooks':
+        specifier: workspace:*
+        version: link:../../packages/hooks
+      '@cards/i18n':
+        specifier: workspace:*
+        version: link:../../packages/i18n
+      '@cards/theme':
+        specifier: workspace:*
+        version: link:../../packages/theme
+      '@cards/types':
+        specifier: workspace:*
+        version: link:../../packages/types
+      '@cards/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
+      next:
+        specifier: 16.2.2
+        version: 16.2.2(@babel/core@7.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      react:
+        specifier: 19.2.4
+        version: 19.2.4
+      react-dom:
+        specifier: 19.2.4
+        version: 19.2.4(react@19.2.4)
+      socket.io-client:
+        specifier: ^4.8.3
+        version: 4.8.3
+      zustand:
+        specifier: ^5.0.12
+        version: 5.0.12(@types/react@19.2.14)(react@19.2.4)
+    devDependencies:
+      '@tailwindcss/postcss':
+        specifier: ^4
+        version: 4.2.2
+      '@types/node':
+        specifier: ^20
+        version: 20.19.39
+      '@types/react':
+        specifier: ^19
+        version: 19.2.14
+      '@types/react-dom':
+        specifier: ^19
+        version: 19.2.3(@types/react@19.2.14)
+      eslint:
+        specifier: ^9
+        version: 9.39.4(jiti@2.6.1)
+      eslint-config-next:
+        specifier: 16.2.2
+        version: 16.2.2(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3)
       tailwindcss:
         specifier: ^4
         version: 4.2.2

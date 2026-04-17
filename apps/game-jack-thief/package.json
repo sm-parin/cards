@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@cards/config":   "workspace:*",
     "@cards/types":    "workspace:*",
     "@cards/auth":     "workspace:*",
     "@cards/ui":       "workspace:*",
