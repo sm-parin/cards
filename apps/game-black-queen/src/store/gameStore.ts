@@ -147,18 +147,10 @@ interface GameStoreActions {
    */
   setGameNotification: (msg: string | null) => void;
 
-  /** Stores the passkey for the private room this player created */
-  setRoomPasskey: (passkey: string | null) => void;
-
-  /** Updates the public lobby list from a LOBBIES_LIST event */
-  setLobbies: (lobbies: LobbyEntry[]) => void;
-
-  /** Updates room.maxPlayers — used when the creator changes the cap mid-lobby */
-  setMaxPlayers: (maxPlayers: number) => void;
-
   /**
    * Resets all game state back to initial values.
-   * Used for "Play Again" — preserves socket connection.
+   * Used when the game ends and the player navigates away.
+   * Preserves socket connection.
    */
   resetGame: () => void;
 

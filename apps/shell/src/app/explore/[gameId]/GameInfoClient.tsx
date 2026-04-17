@@ -33,7 +33,7 @@ export default function GameInfoClient({ gameId, config, gameInfo }: Props) {
         {/* Left column — game info */}
         <div>
           {/* Banner */}
-          <div className="w-full aspect-video bg-gradient-to-br from-blue-600 to-purple-700 rounded-xl mb-6 flex items-center justify-center shadow-lg">
+          <div className="w-full aspect-video bg-linear-to-br from-blue-600 to-purple-700 rounded-xl mb-6 flex items-center justify-center shadow-lg">
             <span className="text-3xl font-bold text-white drop-shadow">{gameInfo.displayName}</span>
           </div>
 

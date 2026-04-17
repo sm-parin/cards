@@ -15,7 +15,6 @@ import type {
   JtPlayer,
   JtGameState,
   Card,
-  LobbyEntry,
 } from "@/types";
 import type { PlatformUser } from "@cards/types";
 

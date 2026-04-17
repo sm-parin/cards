@@ -26,8 +26,6 @@ import type {
   RoomJoinedPayload,
   RejoinSuccessPayload,
   RoomUpdatePayload,
-  PrivateRoomCreatedPayload,
-  LobbiesListPayload,
   GameStartedPayload,
   TurnUpdatePayload,
   PlayerHandPayload,
