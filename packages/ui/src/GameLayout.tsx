@@ -27,8 +27,8 @@ export function GameLayout({ header, opponents, table, gameInfo, hand }: GameLay
       flexDirection: 'column',
       height:        '100dvh',
       overflow:      'hidden',
-      background:    '#0a0a0a',
-      color:         '#ffffff',
+      background:    'var(--color-bg, #0a0a0a)',
+      color:         'var(--color-fg, #ffffff)',
     }}>
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <div style={{ flexShrink: 0 }}>
@@ -42,8 +42,7 @@ export function GameLayout({ header, opponents, table, gameInfo, hand }: GameLay
         gap:         12,
         overflowX:   'auto',
         padding:     '12px 16px',
-        borderBottom: '1px solid #1f2937',
-        // hide scrollbar but keep scrollable
+        borderBottom: '1px solid var(--color-border, #1f2937)',
         scrollbarWidth: 'none',
         msOverflowStyle: 'none' as React.CSSProperties['msOverflowStyle'],
       }}>
@@ -58,6 +57,7 @@ export function GameLayout({ header, opponents, table, gameInfo, hand }: GameLay
         justifyContent: 'center',
         padding:        '16px',
         overflowY:      'auto',
+        background:     'var(--color-table, var(--color-bg, #0a0a0a))',
       }}>
         {table}
       </div>
@@ -66,7 +66,7 @@ export function GameLayout({ header, opponents, table, gameInfo, hand }: GameLay
       <div style={{
         flexShrink:  0,
         display:     'flex',
-        borderTop:   '1px solid #1f2937',
+        borderTop:   '1px solid var(--color-border, #1f2937)',
         minHeight:   148,
       }}>
         {/* Game info + timer — left panel */}
@@ -74,7 +74,7 @@ export function GameLayout({ header, opponents, table, gameInfo, hand }: GameLay
           width:       220,
           flexShrink:  0,
           padding:     '12px 16px',
-          borderRight: '1px solid #1f2937',
+          borderRight: '1px solid var(--color-border, #1f2937)',
           overflowY:   'auto',
           display:     'flex',
           flexDirection: 'column',

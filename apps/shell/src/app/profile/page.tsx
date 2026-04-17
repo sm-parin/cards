@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { updateProfile } from '@cards/auth';
 import { useAuth } from '../../context/AuthContext';
-import Header from '../../components/Header';
 import AvatarCircle from '../../components/AvatarCircle';
 
 export default function ProfilePage() {
@@ -51,7 +50,6 @@ export default function ProfilePage() {
 
   return (
     <>
-      <Header />
       <main className="max-w-lg mx-auto px-6 py-12">
         <h2 className="text-2xl font-semibold mb-8">Profile settings</h2>
 

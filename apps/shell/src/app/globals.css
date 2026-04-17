@@ -1,1 +1,52 @@
 @import "tailwindcss";
+
+/**
+ * Shell app theme tokens.
+ *
+ * CSS custom properties defined here are read by Tailwind v4 (@theme inline)
+ * and also available as raw vars (var(--token-*)) in any component.
+ *
+ * To retheme the shell, change the values below — nothing else needs to change.
+ */
+@theme inline {
+  /* ── Brand ──────────────────────────────────────────────────────── */
+  --color-brand:          #6366f1;   /* indigo — shell primary actions */
+  --color-brand-hover:    #4f46e5;   /* darker on hover */
+  --color-brand-muted:    #1e1b4b;   /* subtle brand background */
+
+  /* ── Accent ──────────────────────────────────────────────────────── */
+  --color-accent:         #e8c84a;   /* gold — coins, highlights */
+  --color-accent-hover:   #f0d060;
+  --color-accent-muted:   #2d2510;
+
+  /* ── Backgrounds ──────────────────────────────────────────────────── */
+  --color-bg:             #0a0a0f;   /* page background */
+  --color-surface:        #12121a;   /* panels, cards */
+  --color-surface-raised: #1a1a28;   /* modals, dropdowns */
+  --color-border:         #2a2a3a;   /* borders */
+
+  /* ── Text ────────────────────────────────────────────────────────────────── */
+  --color-fg:             #f8f8fc;   /* primary text */
+  --color-fg-muted:       #9898b0;   /* secondary text */
+  --color-fg-subtle:      #4a4a60;   /* disabled / placeholder */
+
+  /* ── Semantic ──────────────────────────────────────────────────────── */
+  --color-success:        #4ade80;
+  --color-success-muted:  #052e16;
+  --color-danger:         #f87171;
+  --color-danger-muted:   #2d0a0a;
+  --color-warning:        #fbbf24;
+  --color-warning-muted:  #2d1f00;
+
+  /* ── Fonts ────────────────────────────────────────────────────────── */
+  --font-sans: ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, monospace;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-fg);

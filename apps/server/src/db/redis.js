@@ -1,9 +1,18 @@
 /**
- * Redis client — dual mode:
- * - Local dev (Docker): standard redis package over TCP
- * - Production (Upstash): @upstash/redis over HTTP
+ * Redis client — three modes:
+ * - No-op (local dev, no Redis configured): all operations are silent no-ops;
+ *   in-memory store in roomStore.js handles all state.
+ * - Local dev (Docker): standard redis package over TCP via REDIS_URL env var.
+ * - Production (Upstash): @upstash/redis over HTTP via UPSTASH_REDIS_REST_URL.
  *
- * Switch is automatic based on presence of UPSTASH_REDIS_REST_URL env var.
+ * Switch is automatic:
+ *   UPSTASH_REDIS_REST_URL set  → Upstash
+ *   REDIS_URL set               → local TCP Redis
+ *   neither set                 → no-op (dev only)
+ *
+ * All consumers (roomStore, userStore) use the same interface: get/set/del/exists/keys
+ * and never import a Redis client directly.
+ */
  * All consumers (roomStore, userStore) use the same interface: get/set/del/exists/keys
  * and never import a Redis client directly.
  */
@@ -50,13 +59,11 @@ if (process.env.UPSTASH_REDIS_REST_URL) {
 
   console.log('Redis: using Upstash (HTTP)');
 
-} else {
-  // ── Standard Redis (local Docker) ────────────────────────────────────────
+} else if (process.env.REDIS_URL) {
+  // ── Standard Redis (local Docker or explicit TCP URL) ────────────────────────────
   const { createClient } = require('redis');
 
-  const client = createClient({
-    url: process.env.REDIS_URL || 'redis://localhost:6379',
-  });
+  const client = createClient({ url: process.env.REDIS_URL });
 
   client.on('error', (err) => console.error('Redis client error:', err));
 
@@ -88,7 +95,19 @@ if (process.env.UPSTASH_REDIS_REST_URL) {
     return client.keys(pattern);
   };
 
-  console.log('Redis: using local Docker Redis (TCP)');
+  console.log('Redis: using TCP Redis at', process.env.REDIS_URL);
+
+} else {
+  // ── No-op (local dev, no Redis configured) ───────────────────────────────────
+  // Game state lives entirely in the in-memory roomStore. Redis checkpointing
+  // is skipped. Rooms will not survive a server restart, which is fine for dev.
+  _get = async () => null;
+  _set = async () => {};
+  _del = async () => {};
+  _exists = async () => false;
+  _keys = async () => [];
+
+  console.log('Redis: no-op mode (no REDIS_URL or UPSTASH_REDIS_REST_URL set — in-memory only)');
 }
 
 async function connect() {
@@ -96,7 +115,7 @@ async function connect() {
     await _connectFn();
     console.log('Redis connected');
   }
-  // Upstash needs no explicit connect step
+  // Upstash and no-op modes need no explicit connect step
 }
 
 module.exports = {

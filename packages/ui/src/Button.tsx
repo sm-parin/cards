@@ -1,4 +1,4 @@
-import { colors, radii } from '@cards/theme';
+import { radii } from '@cards/theme';
 import type { ReactNode, CSSProperties } from 'react';
 
 type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
@@ -16,14 +16,15 @@ interface ButtonProps {
   className?: string;
 }
 
+// Use CSS custom properties so each app's theme tokens are picked up automatically.
 const VARIANT_STYLES: Record<ButtonVariant, CSSProperties> = {
-  primary:   { background: colors.accent,      color: '#000000', border: 'none' },
-  secondary: { background: colors.bgSubtle,    color: colors.textPrimary,
-               border: `1px solid ${colors.bgBorder}` },
-  ghost:     { background: 'transparent',      color: colors.textSecondary,
+  primary:   { background: 'var(--color-brand)',         color: 'var(--color-bg, #000)',  border: 'none' },
+  secondary: { background: 'var(--color-surface)',       color: 'var(--color-fg)',
+               border: '1px solid var(--color-border)' },
+  ghost:     { background: 'transparent',                color: 'var(--color-fg-muted)',
                border: '1px solid transparent' },
-  danger:    { background: colors.dangerMuted,  color: colors.danger,
-               border: `1px solid ${colors.danger}` },
+  danger:    { background: 'var(--color-danger-muted)',  color: 'var(--color-danger)',
+               border: '1px solid var(--color-danger)' },
 };
 
 const SIZE_STYLES: Record<ButtonSize, CSSProperties> = {

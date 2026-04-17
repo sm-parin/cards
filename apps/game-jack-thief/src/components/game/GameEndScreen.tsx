@@ -3,12 +3,14 @@
 import { useGameStore } from "@/store/gameStore";
 import { t } from "@/utils/i18n";
 import { Button } from "@cards/ui";
+import { emitLeaveRoom } from "@/utils/socketEmitter";
+
+const SHELL_URL = process.env.NEXT_PUBLIC_SHELL_URL || "http://localhost:3000";
 
 export default function GameEndScreen() {
   const room = useGameStore((s) => s.room);
   const gameState = useGameStore((s) => s.gameState);
   const player = useGameStore((s) => s.player);
-  const resetGame = useGameStore((s) => s.resetGame);
 
   if (!gameState) return null;
 
@@ -19,7 +21,8 @@ export default function GameEndScreen() {
     room?.players.find((p) => p.id === id)?.username ?? id;
 
   const handleExit = () => {
-    resetGame();
+    if (room) emitLeaveRoom(room.roomId);
+    window.location.replace(`${SHELL_URL}/explore`);
   };
 
   return (

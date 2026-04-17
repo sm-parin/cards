@@ -22,8 +22,6 @@ import type {
   RoomJoinedPayload,
   RejoinSuccessPayload,
   RoomUpdatePayload,
-  PrivateRoomCreatedPayload,
-  LobbiesListPayload,
   JtGameStartedPayload,
   JtPlayerHandPayload,
   JtPreGameEndedPayload,
@@ -61,8 +59,6 @@ export function useSocket(): void {
     addWinner,
     setGameEnded,
     setGameNotification,
-    setRoomPasskey,
-    setLobbies,
   } = useGameStore();
 
   /** Finds self in a player list by stable auth user ID */
@@ -108,14 +104,6 @@ export function useSocket(): void {
 
     const onRoomUpdate = ({ players, maxPlayers }: RoomUpdatePayload) => {
       updatePlayers(players, maxPlayers);
-    };
-
-    const onPrivateRoomCreated = ({ passkey }: PrivateRoomCreatedPayload) => {
-      setRoomPasskey(passkey);
-    };
-
-    const onLobbiesList = ({ lobbies }: LobbiesListPayload) => {
-      setLobbies(lobbies);
     };
 
     // ── Jack-Thief game events ─────────────────────────────────────────────
@@ -263,8 +251,6 @@ export function useSocket(): void {
     socketInstance.on(SERVER_EVENTS.REJOIN_SUCCESS, onRejoinSuccess);
     socketInstance.on(SERVER_EVENTS.ROOM_JOINED, onRoomJoined);
     socketInstance.on(SERVER_EVENTS.ROOM_UPDATE, onRoomUpdate);
-    socketInstance.on(SERVER_EVENTS.PRIVATE_ROOM_CREATED, onPrivateRoomCreated);
-    socketInstance.on(SERVER_EVENTS.LOBBIES_LIST, onLobbiesList);
     socketInstance.on(JT_SERVER_EVENTS.JT_GAME_STARTED, onJtGameStarted);
     socketInstance.on(JT_SERVER_EVENTS.JT_PLAYER_HAND, onJtPlayerHand);
     socketInstance.on(JT_SERVER_EVENTS.JT_PAIR_DISCARDED, onJtPairDiscarded);
@@ -286,8 +272,6 @@ export function useSocket(): void {
       socketInstance.off(SERVER_EVENTS.REJOIN_SUCCESS, onRejoinSuccess);
       socketInstance.off(SERVER_EVENTS.ROOM_JOINED, onRoomJoined);
       socketInstance.off(SERVER_EVENTS.ROOM_UPDATE, onRoomUpdate);
-      socketInstance.off(SERVER_EVENTS.PRIVATE_ROOM_CREATED, onPrivateRoomCreated);
-      socketInstance.off(SERVER_EVENTS.LOBBIES_LIST, onLobbiesList);
       socketInstance.off(JT_SERVER_EVENTS.JT_GAME_STARTED, onJtGameStarted);
       socketInstance.off(JT_SERVER_EVENTS.JT_PLAYER_HAND, onJtPlayerHand);
       socketInstance.off(JT_SERVER_EVENTS.JT_PAIR_DISCARDED, onJtPairDiscarded);

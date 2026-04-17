@@ -29,7 +29,7 @@ import type {
   Suit,
   Card,
   GameEndedPayload,
-  LobbyEntry,
+
 } from "@/types";
 import type { PlatformUser } from "@cards/types";
 
@@ -79,12 +79,6 @@ interface GameStoreState {
    * Set by socket errors during gameplay; auto-cleared after a few seconds.
    */
   gameNotification: string | null;
-
-  /** Passkey for the private room the player created — null for public rooms */
-  roomPasskey: string | null;
-
-  /** List of joinable public lobbies — updated on LOBBIES_LIST */
-  lobbies: LobbyEntry[];
 }
 
 // ---------------------------------------------------------------------------
@@ -221,8 +215,6 @@ const INITIAL_STATE: GameStoreState = {
   stackFlash: null,
   partnerRevealedId: null,
   gameNotification: null,
-  roomPasskey: null,
-  lobbies: [],
 };
 
 export const useGameStore = create<GameStore>((set, get) => ({
@@ -285,20 +277,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({ gameNotification: msg });
   },
 
-  setRoomPasskey: (passkey) => {
-    set({ roomPasskey: passkey });
-  },
-
-  setLobbies: (lobbies) => {
-    set({ lobbies });
-  },
-
-  setMaxPlayers: (maxPlayers) => {
-    const room = get().room;
-    if (!room) return;
-    set({ room: { ...room, maxPlayers } });
-  },
-
   resetGame: () => {
     set({
       room: null,
@@ -309,7 +287,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
       stackFlash: null,
       partnerRevealedId: null,
       gameNotification: null,
-      roomPasskey: null,
     });
   },
 

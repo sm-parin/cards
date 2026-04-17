@@ -34,8 +34,6 @@ interface GameStoreState {
   hand: Card[];
   /** Transient error/info notification */
   gameNotification: string | null;
-  roomPasskey: string | null;
-  lobbies: LobbyEntry[];
 }
 
 // ---------------------------------------------------------------------------
@@ -47,7 +45,6 @@ interface GameStoreActions {
   setAuthUser: (user: PlatformUser) => void;
   setRoom: (room: JtRoom) => void;
   updatePlayers: (players: JtPlayer[], maxPlayers?: number) => void;
-  setMaxPlayers: (maxPlayers: number) => void;
   setPlayer: (player: JtPlayer) => void;
 
   /** Initialise game state from JT_GAME_STARTED or JT_GAME_STATE (rejoin) */
@@ -84,8 +81,6 @@ interface GameStoreActions {
   setGameEnded: (loser: string | null, winners: string[], coinDeltas: Record<string, number>, matchId: string) => void;
 
   setGameNotification: (msg: string | null) => void;
-  setRoomPasskey: (passkey: string | null) => void;
-  setLobbies: (lobbies: LobbyEntry[]) => void;
 
   /** Reset all game state but keep socket connection */
   resetGame: () => void;
@@ -105,8 +100,6 @@ const INITIAL_STATE: GameStoreState = {
   gameState: null,
   hand: [],
   gameNotification: null,
-  roomPasskey: null,
-  lobbies: [],
 };
 
 // ---------------------------------------------------------------------------
@@ -132,12 +125,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({
       room: { ...room, players, ...(maxPlayers !== undefined ? { maxPlayers } : {}) },
     });
-  },
-
-  setMaxPlayers: (maxPlayers) => {
-    const room = get().room;
-    if (!room) return;
-    set({ room: { ...room, maxPlayers } });
   },
 
   setPlayer: (player) => set({ player }),
@@ -213,8 +200,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   setGameNotification: (msg) => set({ gameNotification: msg }),
-  setRoomPasskey: (passkey) => set({ roomPasskey: passkey }),
-  setLobbies: (lobbies) => set({ lobbies }),
 
   resetGame: () =>
     set({
@@ -223,6 +208,5 @@ export const useGameStore = create<GameStore>((set, get) => ({
       gameState: null,
       hand: [],
       gameNotification: null,
-      roomPasskey: null,
     }),
 }));

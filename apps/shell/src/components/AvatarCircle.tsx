@@ -18,7 +18,8 @@ function getColor(userId: string): string {
   return PALETTE[djb2Hash(userId) % PALETTE.length];
 }
 
-function getInitials(name: string): string {
+function getInitials(name: string | undefined | null): string {
+  if (!name) return '?';
   const trimmed = name.trim();
   if (!trimmed) return '?';
   const parts = trimmed.split(/\s+/);
@@ -27,19 +28,20 @@ function getInitials(name: string): string {
 }
 
 interface AvatarCircleProps {
-  userId: string;
-  displayName: string;
+  userId: string | undefined;
+  displayName: string | undefined | null;
   size?: number;
 }
 
 export default function AvatarCircle({ userId, displayName, size = 36 }: AvatarCircleProps) {
+  const safeId = userId || 'default';
   return (
     <div
       style={{
         width: size,
         height: size,
         borderRadius: '50%',
-        backgroundColor: getColor(userId),
+        backgroundColor: getColor(safeId),
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -51,7 +53,6 @@ export default function AvatarCircle({ userId, displayName, size = 36 }: AvatarC
         cursor: 'pointer',
       }}
     >
-      {getInitials(displayName)}
-    </div>
+      {getInitials(displayName)}    </div>
   );
 }

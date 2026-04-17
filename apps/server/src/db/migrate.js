@@ -63,6 +63,10 @@ END $$;
 `;
 
 async function runMigrations() {
+  if (!process.env.DATABASE_URL) {
+    console.log('Migrations: skipped (no DATABASE_URL — auth/coins unavailable in this mode)');
+    return;
+  }
   await query(SQL_CREATE);
   await query(SQL_ALTER);
   console.log('Migrations complete');

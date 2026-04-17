@@ -1,19 +1,32 @@
-'use client';
-import { useState } from 'react';
-import Link from 'next/link';
-import { useParams } from 'next/navigation';
-import { GAME_CONFIG, type GameType } from '@cards/config';
-import { Button } from '@cards/ui';
-import RulesModal from '../../../components/RulesModal';
-import LobbyPanel from '../../../components/LobbyPanel';
+import { GAME_CONFIG, type GameType, type GameInfo } from '@cards/config';
+import GameInfoClient from './GameInfoClient';
 
-export default function GameInfoPage() {
-  const params = useParams();
-  const gameId = params.gameId as string;
+interface PageProps {
+  params: Promise<{ gameId: string }>;
+}
+
+async function fetchGameInfo(url: string, displayName: string): Promise<GameInfo> {
+  try {
+    const res = await fetch(`${url}/api/game-info`, {
+      next: { revalidate: 3600 },
+    });
+    if (!res.ok) throw new Error('Non-OK response');
+    return await res.json();
+  } catch {
+    return {
+      displayName,
+      description: '',
+      minPlayers: 2,
+      maxPlayers: 13,
+      rules: [],
+    };
+  }
+}
+
+export default async function GameInfoPage({ params }: PageProps) {
+  const { gameId } = await params;
   const gameKey = gameId as GameType;
   const config = GAME_CONFIG[gameKey];
-
-  const [showRules, setShowRules] = useState(false);
 
   if (!config) {
     return (
@@ -23,46 +36,7 @@ export default function GameInfoPage() {
     );
   }
 
-  return (
-    <main className="max-w-6xl mx-auto px-6 py-12">
-      {/* Back link */}
-      <Link href="/explore" className="text-gray-400 hover:text-white transition-colors mb-8 inline-block">
-        ← Explore other games
-      </Link>
+  const gameInfo = await fetchGameInfo(config.url, config.displayName);
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-        {/* Left column */}
-        <div>
-          {/* Game image placeholder */}
-          <div className="w-full aspect-video bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg mb-6 flex items-center justify-center">
-            <span className="text-4xl font-bold text-white">{config.displayName}</span>
-          </div>
-
-          {/* Game description */}
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold mb-4">{config.displayName}</h2>
-            <p className="text-gray-300 mb-4">{config.description}</p>
-            <p className="text-gray-400">
-              {(config.minPlayers as number) === (config.maxPlayers as number)
-                ? `${config.minPlayers} players`
-                : `${config.minPlayers}–${config.maxPlayers} players`}
-            </p>
-          </div>
-
-          {/* Rules button */}
-          <Button variant="ghost" onClick={() => setShowRules(true)}>
-            Know the Rules!
-          </Button>
-        </div>
-
-        {/* Right column: Lobby Panel */}
-        <div>
-          <LobbyPanel config={config} gameId={gameKey} />
-        </div>
-      </div>
-
-      {/* Rules Modal */}
-      {showRules && <RulesModal gameName={config.displayName} onClose={() => setShowRules(false)} />}
-    </main>
-  );
+  return <GameInfoClient gameId={gameKey} config={config} gameInfo={gameInfo} />;
 }

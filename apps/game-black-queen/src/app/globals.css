@@ -1,42 +1,58 @@
 @import "tailwindcss";
 
 /**
- * Design token CSS custom properties.
+ * Black Queen app theme tokens.
  *
- * Tailwind v4 reads `@theme` to expose utility classes automatically:
- * e.g. `bg-primary`, `text-foreground`, `text-muted`.
- *
- * Keep values in sync with src/theme/index.ts.
+ * To retheme Black Queen, change the values below — nothing else needs to change.
  */
 @theme inline {
-  /* --- Colors --- */
-  --color-primary:        #16a34a;
-  --color-primary-dark:   #15803d;
-  --color-secondary:      #1d4ed8;
-  --color-secondary-dark: #1e40af;
+  /* ── Brand ──────────────────────────────────────────────────────── */
+  --color-brand:          #16a34a;   /* green */
+  --color-brand-hover:    #15803d;
+  --color-brand-muted:    #052e16;
 
-  --color-background:     #0a0a0a;
-  --color-surface:        #141414;
-  --color-border:         #27272a;
+  /* ── Accent ──────────────────────────────────────────────────────── */
+  --color-accent:         #e8c84a;   /* gold */
+  --color-accent-hover:   #f0d060;
+  --color-accent-muted:   #2d2510;
 
-  --color-foreground:     #fafafa;
-  --color-muted:          #71717a;
+  /* ── Backgrounds ──────────────────────────────────────────────────── */
+  --color-bg:             #040d06;   /* deep game background */
+  --color-surface:        #0d1a10;   /* panels */
+  --color-surface-raised: #142016;   /* modals, dropdowns */
+  --color-border:         #1f3324;
 
-  --color-danger:         #dc2626;
-  --color-success:        #16a34a;
-  --color-warning:        #d97706;
+  /* ── Table (game-specific) ───────────────────────────────────────────────── */
+  --color-table:          #0f4d1a;   /* card table felt — deep forest green */
+  --color-table-border:   #1a6b2a;
 
-  /* --- Fonts --- */
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  /* ── Text ────────────────────────────────────────────────────────────────── */
+  --color-fg:             #f0faf2;
+  --color-fg-muted:       #7aad85;
+  --color-fg-subtle:      #3a5e42;
+
+  /* ── Semantic ──────────────────────────────────────────────────────── */
+  --color-success:        #4ade80;
+  --color-success-muted:  #052e16;
+  --color-danger:         #f87171;
+  --color-danger-muted:   #2d0a0a;
+  --color-warning:        #fbbf24;
+  --color-warning-muted:  #2d1f00;
+
+  /* ── Card suits ─────────────────────────────────────────────────────── */
+  --color-suit-red:       #ef4444;
+  --color-suit-black:     #f0faf2;
+
+  /* ── Fonts ────────────────────────────────────────────────────────── */
+  --font-sans: ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, monospace;
 }
 
-/* Base layer */
 :root {
   color-scheme: dark;
 }
 
 body {
-  background-color: var(--color-background);
-  color: var(--color-foreground);
+  background-color: var(--color-bg);
+  color: var(--color-fg);
 }

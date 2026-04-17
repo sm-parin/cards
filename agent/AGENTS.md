@@ -2,7 +2,7 @@
 # Overwrite this file completely at the end of every session.
 # Never append — always replace the full file.
 # Goal: give AI agents complete platform context in minimum tokens.
-# Last updated: 2026-04-16 — shell platform UI: Homepage, Explore, GameInfo, RulesModal, LobbyPanel with socket integration
+# Last updated: 2026-04-18 — lobby centralised to shell; lobby removed from game apps; game-start navigation added to shell LobbyPanel
 
 ## Step 0 reading list (mandatory before any work)
 1. AGENTS.md (this file)
@@ -143,6 +143,26 @@ Redis checkpointed only at: createRoom, joinRoom, startGame, deleteRoom.
                   createRoomEmitters(socket, tokenKey, defaultMaxPlayers=5) → RoomEmitters
                   (12 shared fns: getToken/setToken/clearToken + 9 room/lobby emitters)
 
+## Architecture: lobby ownership
+
+### Shell owns all lobby logic (as of 2026-04-18)
+Games (BQ + JT) no longer have HomeScreen or LobbyScreen. Lobby lifecycle:
+1. Player creates/joins a room via shell's /explore/[gameId] LobbyPanel
+2. Shell socket listens for GAME_STARTED (BQ) or JT_GAME_STARTED (JT)
+3. On event: shell calls window.location.replace(config.url + ?token=...) → game app opens
+4. Game app connects → INIT_PLAYER → server sends REJOIN_SUCCESS + game state
+5. Game renders immediately (no lobby phase in game app)
+
+If no REJOIN_SUCCESS arrives within 8s → game shows "No active game session found" error with link to /explore.
+
+Game app entry is exclusively via shell lobby. Direct URL access to game apps without   
+an active session shows the 8-second loading → error state.
+
+GameEndScreen Exit in both games: emitLeaveRoom + window.location.replace(SHELL_URL/explore).
+
+### Shell keys
+NEXT_PUBLIC_SHELL_URL — used by game apps to link back to shell. Default: http://localhost:3000
+
 ## Shell structure and pages
 Entry: apps/shell/src/app/page.tsx
 Layout: apps/shell/src/app/layout.tsx — wraps all pages in AuthProvider, renders Header
@@ -158,7 +178,13 @@ Shell pages:
 Key components:
   Header.tsx         — Navigation: left (Cards logo), right (Explore + profile/guest icon)
   RulesModal.tsx     — Multi-slide modal (How to Play, Scoring, Winning) with prev/next navigation
-  LobbyPanel.tsx     — Two-tab UI: Create Lobby (PRE/POST states) + Join Lobby (search, filter, sort)
+  LobbyPanel.tsx     — Two-tab UI: Create Lobby (PRE/POST states) + Join Lobby
+                       Join tab: search bar, Quick Match, filter row (Lobby Type dropdown,
+                       Player Count range slider dropdown [min 2–max 13], Decks dropdown,
+                       Sort dropdown), table-layout lobby list with columns:
+                       Lobby Name | Players | Type | Decks | Action
+                       Fastest sort: ascending diff (maxPlayers−playerCount), preserves server order for ties.
+                       Listens for GAME_STARTED + JT_GAME_STARTED → navigates to config.url + ?token=
   config/socket.ts   — Socket.IO factory: getSocket() lazy-initializes with token auth
 
 Socket integration:

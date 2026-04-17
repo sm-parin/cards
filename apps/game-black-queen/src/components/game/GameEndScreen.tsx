@@ -19,12 +19,13 @@ import { t } from "@/utils/i18n";
 import { Button } from "@cards/ui";
 import { emitLeaveRoom } from "@/utils/socketEmitter";
 
+const SHELL_URL = process.env.NEXT_PUBLIC_SHELL_URL || "http://localhost:3000";
+
 export default function GameEndScreen() {
   const room = useGameStore((s) => s.room);
   const gameState = useGameStore((s) => s.gameState);
   const player = useGameStore((s) => s.player);
   const gameEndResult = useGameStore((s) => s.gameEndResult);
-  const resetGame = useGameStore((s) => s.resetGame);
 
   // Fallback to score stored in gameState if full payload not available
   const scores = gameEndResult?.scores ?? gameState?.score;
@@ -44,7 +45,7 @@ export default function GameEndScreen() {
 
   const handleExit = () => {
     if (room) emitLeaveRoom(room.roomId);
-    resetGame();
+    window.location.replace(`${SHELL_URL}/explore`);
   };
 
   const winnerLabel =

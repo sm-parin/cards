@@ -71,8 +71,6 @@ export function useSocket(): void {
     updateHand,
     removeFromHand,
     setGameNotification,
-    setRoomPasskey,
-    setLobbies,
   } = useGameStore();
 
   /** Resolves self from a room's player list using the stable auth user ID. */
@@ -146,23 +144,6 @@ export function useSocket(): void {
      */
     const onRoomUpdate = ({ players, maxPlayers }: RoomUpdatePayload) => {
       updatePlayers(players, maxPlayers);
-    };
-
-    /**
-     * PRIVATE_ROOM_CREATED
-     * Emitted to the creator only — carries the passkey to share with friends.
-     * ROOM_JOINED follows immediately with the full room object.
-     */
-    const onPrivateRoomCreated = ({ passkey }: PrivateRoomCreatedPayload) => {
-      setRoomPasskey(passkey);
-    };
-
-    /**
-     * LOBBIES_LIST
-     * Response to GET_LOBBIES — delivers the current public lobby list.
-     */
-    const onLobbiesList = ({ lobbies }: LobbiesListPayload) => {
-      setLobbies(lobbies);
     };
 
     /**
@@ -296,8 +277,6 @@ export function useSocket(): void {
     socketInstance.on(SERVER_EVENTS.REJOIN_SUCCESS, onRejoinSuccess);
     socketInstance.on(SERVER_EVENTS.ROOM_JOINED, onRoomJoined);
     socketInstance.on(SERVER_EVENTS.ROOM_UPDATE, onRoomUpdate);
-    socketInstance.on(SERVER_EVENTS.PRIVATE_ROOM_CREATED, onPrivateRoomCreated);
-    socketInstance.on(SERVER_EVENTS.LOBBIES_LIST, onLobbiesList);
     socketInstance.on(SERVER_EVENTS.GAME_STARTED, onGameStarted);
     socketInstance.on(SERVER_EVENTS.TURN_UPDATE, onTurnUpdate);
     socketInstance.on(SERVER_EVENTS.PLAYER_HAND, onPlayerHand);
@@ -317,8 +296,6 @@ export function useSocket(): void {
       socketInstance.off(SERVER_EVENTS.REJOIN_SUCCESS, onRejoinSuccess);
       socketInstance.off(SERVER_EVENTS.ROOM_JOINED, onRoomJoined);
       socketInstance.off(SERVER_EVENTS.ROOM_UPDATE, onRoomUpdate);
-      socketInstance.off(SERVER_EVENTS.PRIVATE_ROOM_CREATED, onPrivateRoomCreated);
-      socketInstance.off(SERVER_EVENTS.LOBBIES_LIST, onLobbiesList);
       socketInstance.off(SERVER_EVENTS.GAME_STARTED, onGameStarted);
       socketInstance.off(SERVER_EVENTS.TURN_UPDATE, onTurnUpdate);
       socketInstance.off(SERVER_EVENTS.PLAYER_HAND, onPlayerHand);

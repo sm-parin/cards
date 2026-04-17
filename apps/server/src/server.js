@@ -43,7 +43,9 @@ async function start() {
   await runMigrations();
 
   server.listen(PORT, () => {
-    console.log(`Server listening on port ${PORT}`);
+    console.log(`Server listening on port ${PORT}`);\n    if (!process.env.DATABASE_URL) {
+      console.warn('WARNING: DATABASE_URL not set — auth endpoints and coin tracking are disabled');
+    }
   });
 }
 
