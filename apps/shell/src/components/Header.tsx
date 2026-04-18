@@ -1,56 +1,72 @@
 'use client';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '../context/AuthContext';
 import { AvatarCircle } from '@cards/ui';
 
 export default function Header() {
   const { user } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
 
   const displayName = user?.nickname ?? user?.email?.split('@')[0] ?? user?.username ?? 'Guest';
   const isGuest = !user?.id;
 
   return (
-    <header className="bg-gray-900 border-b border-gray-800 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-        {/* Left: Cards branding */}
-        <Link href="/" className="text-xl font-bold text-white hover:text-gray-300 transition-colors">
+    <header
+      className="sticky top-0 z-50"
+      style={{
+        background: 'color-mix(in srgb, var(--color-bg) 80%, transparent)',
+        backdropFilter: 'blur(14px)',
+        WebkitBackdropFilter: 'blur(14px)',
+        borderBottom: '1px solid var(--color-border)',
+        height: '56px',
+      }}
+    >
+      <div
+        className="max-w-5xl mx-auto px-6 h-full flex items-center justify-between"
+      >
+        {/* Logo */}
+        <Link
+          href="/"
+          className="font-bold text-sm tracking-tight transition-opacity hover:opacity-70"
+          style={{ color: 'var(--color-fg)', letterSpacing: '-0.01em', fontSize: '15px' }}
+        >
           Cards
         </Link>
 
-        {/* Right: Explore + Profile area */}
+        {/* Nav + user */}
         <div className="flex items-center gap-6">
-          {/* Explore link */}
           <Link
             href="/explore"
-            className="text-gray-300 hover:text-white transition-colors text-sm font-medium"
+            className="text-sm font-medium transition-colors"
+            style={{ color: pathname === '/explore' ? 'var(--color-fg)' : 'var(--color-fg-muted)' }}
           >
             Explore
           </Link>
 
-          {/* Profile area */}
           <button
-            onClick={() => {
-              if (isGuest) {
-                router.push('/login');
-              } else {
-                router.push('/profile');
-              }
-            }}
-            className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+            onClick={() => router.push(isGuest ? '/login' : '/profile')}
+            className="flex items-center gap-2 transition-opacity hover:opacity-75"
           >
             {isGuest ? (
               <>
-                <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-xs font-medium text-gray-300">
+                <div
+                  className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold"
+                  style={{ background: 'var(--color-surface-raised)', color: 'var(--color-fg-muted)', border: '1px solid var(--color-border)' }}
+                >
                   ?
                 </div>
-                <span className="text-sm text-gray-300">GUEST</span>
+                <span className="text-sm" style={{ color: 'var(--color-fg-muted)' }}>
+                  Sign in
+                </span>
               </>
             ) : (
               <>
-                <AvatarCircle userId={user.id} displayName={displayName} size={32} />
-                <span className="text-sm text-gray-300">{displayName}</span>
+                <AvatarCircle userId={user.id} displayName={displayName} size={28} />
+                <span className="text-sm font-medium" style={{ color: 'var(--color-fg)' }}>
+                  {displayName}
+                </span>
               </>
             )}
           </button>

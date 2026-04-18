@@ -5,32 +5,84 @@ import { useAuth } from '../../context/AuthContext';
 
 export default function ExplorePage() {
   const { loading } = useAuth();
-
   if (loading) return null;
 
   const games = Object.entries(GAME_CONFIG);
 
   return (
-    <main className="max-w-6xl mx-auto px-6 py-12">
-      <h1 className="text-3xl font-bold mb-12">Explore Games</h1>
+    <main className="max-w-5xl mx-auto px-6 py-14">
+      {/* Header */}
+      <div className="mb-12">
+        <h1
+          className="text-4xl font-bold tracking-tight mb-3"
+          style={{ color: 'var(--color-fg)' }}
+        >
+          Games
+        </h1>
+        <p style={{ color: 'var(--color-fg-muted)' }}>
+          Choose a game and find a lobby to join.
+        </p>
+      </div>
 
-      {/* 2-col grid desktop, 1-col mobile */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+      {/* Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         {games.map(([gameId, config]) => (
-          <Link
-            key={gameId}
-            href={`/explore/${gameId}`}
-            className="group cursor-pointer"
-          >
-            {/* Game image placeholder */}
-            <div className="w-full aspect-video bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg mb-4 flex items-center justify-center group-hover:shadow-lg transition-shadow">
-              <span className="text-2xl font-bold text-white">{config.displayName}</span>
-            </div>
+          <Link key={gameId} href={`/explore/${gameId}`} className="group block">
+            <div
+              className="rounded-2xl overflow-hidden border transition-all duration-200 group-hover:-translate-y-1 group-hover:shadow-2xl"
+              style={{
+                borderColor: 'var(--color-border)',
+                background: 'var(--color-surface)',
+              }}
+            >
+              {/* Banner */}
+              <div
+                className="relative h-48 flex flex-col items-center justify-center"
+                style={{ background: config.theme.gradient }}
+              >
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    background: 'radial-gradient(circle at 25% 40%, rgba(255,255,255,0.12) 0%, transparent 55%)',
+                  }}
+                />
+                <span className="text-6xl relative z-10 mb-1">{config.theme.symbol}</span>
+                <span
+                  className="relative z-10 text-xs font-semibold uppercase tracking-widest"
+                  style={{ color: 'rgba(255,255,255,0.5)' }}
+                >
+                  {config.theme.playerRange} players
+                </span>
+              </div>
 
-            {/* Game name */}
-            <h2 className="text-xl font-semibold text-white group-hover:text-gray-300 transition-colors">
-              {config.displayName}
-            </h2>
+              {/* Footer */}
+              <div
+                className="px-6 py-5 flex items-center justify-between"
+                style={{ borderTop: '1px solid var(--color-border)' }}
+              >
+                <div>
+                  <h2
+                    className="text-lg font-semibold mb-0.5"
+                    style={{ color: 'var(--color-fg)' }}
+                  >
+                    {config.displayName}
+                  </h2>
+                  <p className="text-xs" style={{ color: 'var(--color-fg-muted)' }}>
+                    Real-time multiplayer
+                  </p>
+                </div>
+                <span
+                  className="text-sm font-medium px-4 py-2 rounded-xl transition-all duration-200"
+                  style={{
+                    background: `color-mix(in srgb, ${config.theme.accentColor} 15%, transparent)`,
+                    color: config.theme.accentColor,
+                    border: `1px solid color-mix(in srgb, ${config.theme.accentColor} 30%, transparent)`,
+                  }}
+                >
+                  Play
+                </span>
+              </div>
+            </div>
           </Link>
         ))}
       </div>

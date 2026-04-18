@@ -62,99 +62,164 @@ export default function LoginPage() {
   if (loading) return null;
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
+    <div className="min-h-[calc(100vh-56px)] flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-sm">
-        <h1 className="text-3xl font-bold mb-8 text-center">Cards</h1>
-
-        {/* Tabs */}
-        <div className="flex border border-gray-800 rounded-lg overflow-hidden mb-6">
-          {(['login', 'register'] as Tab[]).map((t) => (
-            <button
-              key={t}
-              onClick={() => { setTab(t); setError(''); }}
-              className={`flex-1 py-2 text-sm font-medium transition-colors capitalize
-                ${tab === t
-                  ? 'bg-gray-800 text-white'
-                  : 'text-gray-500 hover:text-gray-300'}`}
-            >
-              {t}
-            </button>
-          ))}
+        {/* Logo */}
+        <div className="text-center mb-10">
+          <h1
+            className="text-3xl font-bold tracking-tight mb-1"
+            style={{ color: 'var(--color-fg)' }}
+          >
+            Welcome back
+          </h1>
+          <p style={{ color: 'var(--color-fg-muted)', fontSize: '14px' }}>
+            {tab === 'login' ? 'Sign in to your account' : 'Create a new account'}
+          </p>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm text-gray-400 mb-1">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              className="w-full bg-gray-900 border border-gray-800 rounded-lg
-                         px-3 py-2 text-white text-sm focus:outline-none
-                         focus:border-gray-600"
-              autoComplete="email"
-              required
-            />
+        {/* Card */}
+        <div
+          className="rounded-2xl p-7 border"
+          style={{ background: 'var(--color-surface)', borderColor: 'var(--color-border)' }}
+        >
+          {/* Tabs */}
+          <div
+            className="flex rounded-xl overflow-hidden mb-7 p-1"
+            style={{ background: 'var(--color-surface-raised)' }}
+          >
+            {(['login', 'register'] as Tab[]).map((t) => (
+              <button
+                key={t}
+                onClick={() => { setTab(t); setError(''); }}
+                className="flex-1 py-2 text-sm font-medium transition-all duration-150 rounded-lg capitalize"
+                style={{
+                  background: tab === t ? 'var(--color-bg)' : 'transparent',
+                  color: tab === t ? 'var(--color-fg)' : 'var(--color-fg-muted)',
+                  boxShadow: tab === t ? '0 1px 3px rgba(0,0,0,0.4)' : 'none',
+                }}
+              >
+                {t === 'login' ? 'Sign in' : 'Register'}
+              </button>
+            ))}
           </div>
 
-          <div>
-            <label className="block text-sm text-gray-400 mb-1">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              className="w-full bg-gray-900 border border-gray-800 rounded-lg
-                         px-3 py-2 text-white text-sm focus:outline-none
-                         focus:border-gray-600"
-              autoComplete={tab === 'login' ? 'current-password' : 'new-password'}
-              required
-            />
-            {/* Password criteria — shown only on register when password has content */}
-            {tab === 'register' && password.length > 0 && (
-              <ul className="mt-2 space-y-1">
-                {PW_CRITERIA.map(c => (
-                  <li key={c.label} className="flex items-center gap-2 text-xs">
-                    <span style={{ color: c.test(password) ? '#22c55e' : '#6b7280' }}>
-                      {c.test(password) ? '✓' : '○'}
-                    </span>
-                    <span style={{ color: c.test(password) ? '#22c55e' : '#6b7280' }}>
-                      {c.label}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-
-          {tab === 'register' && (
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm text-gray-400 mb-1">Confirm password</label>
+              <label
+                className="block text-xs font-medium mb-1.5"
+                style={{ color: 'var(--color-fg-muted)' }}
+              >
+                Email
+              </label>
               <input
-                type="password"
-                value={confirmPassword}
-                onChange={e => setConfirmPassword(e.target.value)}
-                className="w-full bg-gray-900 border border-gray-800 rounded-lg
-                           px-3 py-2 text-white text-sm focus:outline-none
-                           focus:border-gray-600"
-                autoComplete="new-password"
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                className="w-full rounded-xl px-3.5 py-2.5 text-sm transition-all"
+                style={{
+                  background: 'var(--color-surface-raised)',
+                  border: '1px solid var(--color-border)',
+                  color: 'var(--color-fg)',
+                  outline: 'none',
+                }}
+                onFocus={e => { e.target.style.borderColor = 'var(--color-brand)'; e.target.style.boxShadow = '0 0 0 3px color-mix(in srgb, var(--color-brand) 15%, transparent)'; }}
+                onBlur={e => { e.target.style.borderColor = 'var(--color-border)'; e.target.style.boxShadow = 'none'; }}
+                autoComplete="email"
                 required
               />
             </div>
-          )}
 
-          {error && <p className="text-red-400 text-sm">{error}</p>}
+            <div>
+              <label
+                className="block text-xs font-medium mb-1.5"
+                style={{ color: 'var(--color-fg-muted)' }}
+              >
+                Password
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                className="w-full rounded-xl px-3.5 py-2.5 text-sm transition-all"
+                style={{
+                  background: 'var(--color-surface-raised)',
+                  border: '1px solid var(--color-border)',
+                  color: 'var(--color-fg)',
+                  outline: 'none',
+                }}
+                onFocus={e => { e.target.style.borderColor = 'var(--color-brand)'; e.target.style.boxShadow = '0 0 0 3px color-mix(in srgb, var(--color-brand) 15%, transparent)'; }}
+                onBlur={e => { e.target.style.borderColor = 'var(--color-border)'; e.target.style.boxShadow = 'none'; }}
+                autoComplete={tab === 'login' ? 'current-password' : 'new-password'}
+                required
+              />
+              {tab === 'register' && password.length > 0 && (
+                <ul className="mt-3 space-y-1.5">
+                  {PW_CRITERIA.map(c => (
+                    <li key={c.label} className="flex items-center gap-2 text-xs">
+                      <span style={{ color: c.test(password) ? 'var(--color-success)' : 'var(--color-fg-subtle)', fontSize: '10px' }}>
+                        {c.test(password) ? '●' : '○'}
+                      </span>
+                      <span style={{ color: c.test(password) ? 'var(--color-success)' : 'var(--color-fg-muted)' }}>
+                        {c.label}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
 
-          <button
-            type="submit"
-            disabled={submitting}
-            className="w-full bg-white text-gray-950 rounded-lg py-2 text-sm
-                       font-medium hover:bg-gray-100 transition-colors
-                       disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {submitting ? '...' : tab === 'login' ? 'Login' : 'Create account'}
-          </button>
-        </form>
+            {tab === 'register' && (
+              <div>
+                <label
+                  className="block text-xs font-medium mb-1.5"
+                  style={{ color: 'var(--color-fg-muted)' }}
+                >
+                  Confirm password
+                </label>
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={e => setConfirmPassword(e.target.value)}
+                  className="w-full rounded-xl px-3.5 py-2.5 text-sm transition-all"
+                  style={{
+                    background: 'var(--color-surface-raised)',
+                    border: '1px solid var(--color-border)',
+                    color: 'var(--color-fg)',
+                    outline: 'none',
+                  }}
+                  onFocus={e => { e.target.style.borderColor = 'var(--color-brand)'; e.target.style.boxShadow = '0 0 0 3px color-mix(in srgb, var(--color-brand) 15%, transparent)'; }}
+                  onBlur={e => { e.target.style.borderColor = 'var(--color-border)'; e.target.style.boxShadow = 'none'; }}
+                  autoComplete="new-password"
+                  required
+                />
+              </div>
+            )}
+
+            {error && (
+              <div
+                className="rounded-xl px-4 py-3 text-sm"
+                style={{ background: 'var(--color-danger-muted)', color: 'var(--color-danger)', border: '1px solid color-mix(in srgb, var(--color-danger) 25%, transparent)' }}
+              >
+                {error}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={submitting}
+              className="w-full rounded-xl py-2.5 text-sm font-semibold transition-all"
+              style={{
+                background: submitting ? 'color-mix(in srgb, var(--color-brand) 70%, transparent)' : 'var(--color-brand)',
+                color: '#fff',
+                cursor: submitting ? 'not-allowed' : 'pointer',
+                marginTop: '8px',
+              }}
+            >
+              {submitting ? 'Please wait…' : tab === 'login' ? 'Sign in' : 'Create account'}
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );

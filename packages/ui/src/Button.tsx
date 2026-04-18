@@ -1,3 +1,5 @@
+'use client';
+import { useState } from 'react';
 import { radii } from '@cards/theme';
 import type { ReactNode, CSSProperties } from 'react';
 
@@ -16,21 +18,24 @@ interface ButtonProps {
   className?: string;
 }
 
-// Use CSS custom properties so each app's theme tokens are picked up automatically.
-const VARIANT_STYLES: Record<ButtonVariant, CSSProperties> = {
-  primary:   { background: 'var(--color-brand)',         color: 'var(--color-bg, #000)',  border: 'none' },
-  secondary: { background: 'var(--color-surface)',       color: 'var(--color-fg)',
-               border: '1px solid var(--color-border)' },
-  ghost:     { background: 'transparent',                color: 'var(--color-fg-muted)',
-               border: '1px solid transparent' },
-  danger:    { background: 'var(--color-danger-muted)',  color: 'var(--color-danger)',
-               border: '1px solid var(--color-danger)' },
+const BASE: Record<ButtonVariant, CSSProperties> = {
+  primary:   { background: 'var(--color-brand)',        color: '#fff',                   border: '1px solid transparent' },
+  secondary: { background: 'transparent',               color: 'var(--color-fg)',         border: '1px solid var(--color-border)' },
+  ghost:     { background: 'transparent',               color: 'var(--color-fg-muted)',   border: '1px solid transparent' },
+  danger:    { background: 'var(--color-danger-muted)', color: 'var(--color-danger)',     border: '1px solid color-mix(in srgb, var(--color-danger) 40%, transparent)' },
 };
 
-const SIZE_STYLES: Record<ButtonSize, CSSProperties> = {
-  sm: { padding: '4px 12px',  fontSize: '12px', borderRadius: radii.md },
-  md: { padding: '8px 20px',  fontSize: '14px', borderRadius: radii.md },
-  lg: { padding: '12px 28px', fontSize: '16px', borderRadius: radii.lg },
+const HOVER: Record<ButtonVariant, Partial<CSSProperties>> = {
+  primary:   { background: 'var(--color-brand-hover)', transform: 'translateY(-1px)', boxShadow: '0 6px 20px -4px color-mix(in srgb, var(--color-brand) 50%, transparent)' },
+  secondary: { background: 'var(--color-surface-raised)', borderColor: 'var(--color-fg-subtle)' },
+  ghost:     { background: 'var(--color-surface)', color: 'var(--color-fg)', borderColor: 'var(--color-border)' },
+  danger:    { background: 'color-mix(in srgb, var(--color-danger-muted) 120%, transparent)', transform: 'translateY(-1px)' },
+};
+
+const SIZES: Record<ButtonSize, CSSProperties> = {
+  sm: { padding: '5px 14px',  fontSize: '12px', borderRadius: radii.md },
+  md: { padding: '9px 22px',  fontSize: '14px', borderRadius: radii.md },
+  lg: { padding: '12px 32px', fontSize: '15px', borderRadius: radii.lg },
 };
 
 export function Button({
@@ -44,6 +49,7 @@ export function Button({
   type = 'button',
   className = '',
 }: ButtonProps) {
+  const [hovered, setHovered] = useState(false);
   const isDisabled = disabled || loading;
 
   return (
@@ -52,14 +58,19 @@ export function Button({
       onClick={onClick}
       disabled={isDisabled}
       className={className}
+      onMouseEnter={() => !isDisabled && setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       style={{
-        ...VARIANT_STYLES[variant],
-        ...SIZE_STYLES[size],
+        ...BASE[variant],
+        ...SIZES[size],
+        ...(hovered && !isDisabled ? HOVER[variant] : {}),
         width:          fullWidth ? '100%' : 'auto',
         fontWeight:     600,
+        letterSpacing:  '0.01em',
+        whiteSpace:     'nowrap',
         cursor:         isDisabled ? 'not-allowed' : 'pointer',
-        opacity:        isDisabled ? 0.5 : 1,
-        transition:     'opacity 150ms, transform 100ms',
+        opacity:        isDisabled ? 0.45 : 1,
+        transition:     'all 150ms ease',
         outline:        'none',
         display:        'inline-flex',
         alignItems:     'center',
@@ -67,7 +78,9 @@ export function Button({
         gap:            '6px',
       }}
     >
-      {loading ? '...' : children}
+      {loading
+        ? <span className="animate-spin inline-block w-3.5 h-3.5 rounded-full border-2 border-current border-t-transparent" />
+        : children}
     </button>
   );
 }

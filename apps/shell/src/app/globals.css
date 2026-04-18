@@ -2,35 +2,31 @@
 
 /**
  * Shell app theme tokens.
- *
- * CSS custom properties defined here are read by Tailwind v4 (@theme inline)
- * and also available as raw vars (var(--token-*)) in any component.
- *
  * To retheme the shell, change the values below — nothing else needs to change.
  */
 @theme inline {
   /* ── Brand ──────────────────────────────────────────────────────── */
-  --color-brand:          #6366f1;   /* indigo — shell primary actions */
-  --color-brand-hover:    #4f46e5;   /* darker on hover */
-  --color-brand-muted:    #1e1b4b;   /* subtle brand background */
+  --color-brand:          #6366f1;
+  --color-brand-hover:    #4f46e5;
+  --color-brand-muted:    #1e1b4b;
 
   /* ── Accent ──────────────────────────────────────────────────────── */
-  --color-accent:         #e8c84a;   /* gold — coins, highlights */
+  --color-accent:         #e8c84a;
   --color-accent-hover:   #f0d060;
   --color-accent-muted:   #2d2510;
 
   /* ── Backgrounds ──────────────────────────────────────────────────── */
-  --color-bg:             #0a0a0f;   /* page background */
-  --color-surface:        #12121a;   /* panels, cards */
-  --color-surface-raised: #1a1a28;   /* modals, dropdowns */
-  --color-border:         #2a2a3a;   /* borders */
+  --color-bg:             #09090e;
+  --color-surface:        #111118;
+  --color-surface-raised: #181824;
+  --color-border:         #252535;
 
-  /* ── Text ────────────────────────────────────────────────────────────────── */
-  --color-fg:             #f8f8fc;   /* primary text */
-  --color-fg-muted:       #9898b0;   /* secondary text */
-  --color-fg-subtle:      #4a4a60;   /* disabled / placeholder */
+  /* ── Text ─────────────────────────────────────────────────────── */
+  --color-fg:             #f4f4fb;
+  --color-fg-muted:       #8888a8;
+  --color-fg-subtle:      #3a3a55;
 
-  /* ── Semantic ──────────────────────────────────────────────────────── */
+  /* ── Semantic ─────────────────────────────────────────────────── */
   --color-success:        #4ade80;
   --color-success-muted:  #052e16;
   --color-danger:         #f87171;
@@ -38,16 +34,33 @@
   --color-warning:        #fbbf24;
   --color-warning-muted:  #2d1f00;
 
-  /* ── Fonts ────────────────────────────────────────────────────────── */
-  --font-sans: ui-sans-serif, system-ui, sans-serif;
-  --font-mono: ui-monospace, monospace;
+  /* ── Fonts ────────────────────────────────────────────────────── */
+  --font-sans: ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: ui-monospace, 'Cascadia Code', monospace;
 }
 
 :root {
   color-scheme: dark;
 }
 
+* {
+  box-sizing: border-box;
+}
+
 body {
   background-color: var(--color-bg);
   color: var(--color-fg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: 'rlig' 1, 'calt' 1;
 }
+
+::selection {
+  background-color: var(--color-brand-muted);
+  color: var(--color-fg);
+}
+
+/* Subtle scrollbar for dark theme */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 3px; }

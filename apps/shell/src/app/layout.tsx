@@ -3,14 +3,14 @@ import { AuthProvider } from '../context/AuthContext';
 import Header from '../components/Header';
 
 export const metadata = {
-  title: 'Cards',
-  description: 'Card games platform',
+  title: 'Cards — Multiplayer Card Games',
+  description: 'Play multiplayer card games online. Black Queen, Jack Thief and more.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className="bg-gray-950 text-white min-h-screen flex flex-col">
+      <body className="min-h-screen flex flex-col antialiased" style={{ backgroundColor: 'var(--color-bg)', color: 'var(--color-fg)' }}>
         <AuthProvider>
           <Header />
           <main className="flex-1">

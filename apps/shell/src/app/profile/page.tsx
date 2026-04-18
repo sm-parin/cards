@@ -49,38 +49,57 @@ export default function ProfilePage() {
   }
 
   return (
-    <>
-      <main className="max-w-lg mx-auto px-6 py-12">
-        <h2 className="text-2xl font-semibold mb-8">Profile settings</h2>
+    <main className="max-w-lg mx-auto px-6 py-14">
+      {/* Header */}
+      <h1
+        className="text-3xl font-bold tracking-tight mb-10"
+        style={{ color: 'var(--color-fg)' }}
+      >
+        Profile
+      </h1>
 
-        {/* Avatar preview */}
-        <div className="flex items-center gap-4 mb-8">
-          <AvatarCircle userId={user.id} displayName={previewName} size={72} />
-          <div>
-            <p className="text-white font-medium">{previewName}</p>
-            <p className="text-sm text-gray-500">{user.email}</p>
-          </div>
+      {/* Avatar + identity card */}
+      <div
+        className="rounded-2xl p-6 flex items-center gap-5 mb-8 border"
+        style={{ background: 'var(--color-surface)', borderColor: 'var(--color-border)' }}
+      >
+        <AvatarCircle userId={user.id} displayName={previewName} size={64} />
+        <div>
+          <p className="font-semibold text-base" style={{ color: 'var(--color-fg)' }}>{previewName}</p>
+          <p className="text-sm mt-0.5" style={{ color: 'var(--color-fg-muted)' }}>{user.email}</p>
         </div>
+      </div>
 
+      {/* Form */}
+      <div
+        className="rounded-2xl p-7 border"
+        style={{ background: 'var(--color-surface)', borderColor: 'var(--color-border)' }}
+      >
         <form onSubmit={handleSave} className="space-y-5">
           {/* Read-only email */}
           <div>
-            <label className="block text-sm text-gray-400 mb-1">Email</label>
+            <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--color-fg-muted)' }}>
+              Email
+            </label>
             <input
               type="email"
               value={user.email ?? ''}
               readOnly
               tabIndex={-1}
-              className="w-full bg-gray-800/50 border border-gray-700/50 rounded-lg
-                         px-3 py-2 text-gray-500 text-sm cursor-not-allowed opacity-70
-                         select-none"
+              className="w-full rounded-xl px-3.5 py-2.5 text-sm cursor-not-allowed"
+              style={{
+                background: 'var(--color-surface-raised)',
+                border: '1px solid var(--color-border)',
+                color: 'var(--color-fg-subtle)',
+                opacity: 0.7,
+              }}
             />
           </div>
 
           {/* Nickname */}
           <div>
-            <label className="block text-sm text-gray-400 mb-1">
-              Nickname <span className="text-gray-600">(visible to other players)</span>
+            <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--color-fg-muted)' }}>
+              Nickname <span style={{ color: 'var(--color-fg-subtle)' }}>— visible to others</span>
             </label>
             <input
               type="text"
@@ -88,51 +107,76 @@ export default function ProfilePage() {
               onChange={e => setNickname(e.target.value)}
               maxLength={32}
               placeholder={user.email?.split('@')[0] ?? user.username}
-              className="w-full bg-gray-900 border border-gray-800 rounded-lg
-                         px-3 py-2 text-white text-sm focus:outline-none
-                         focus:border-gray-600"
+              className="w-full rounded-xl px-3.5 py-2.5 text-sm transition-all"
+              style={{
+                background: 'var(--color-surface-raised)',
+                border: '1px solid var(--color-border)',
+                color: 'var(--color-fg)',
+                outline: 'none',
+              }}
+              onFocus={e => { e.target.style.borderColor = 'var(--color-brand)'; e.target.style.boxShadow = '0 0 0 3px color-mix(in srgb, var(--color-brand) 15%, transparent)'; }}
+              onBlur={e => { e.target.style.borderColor = 'var(--color-border)'; e.target.style.boxShadow = 'none'; }}
             />
           </div>
 
           {/* Bio */}
           <div>
-            <label className="block text-sm text-gray-400 mb-1">Bio</label>
+            <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--color-fg-muted)' }}>
+              Bio
+            </label>
             <textarea
               value={bio}
               onChange={e => setBio(e.target.value)}
               maxLength={280}
               rows={3}
-              placeholder="Say something about yourself..."
-              className="w-full bg-gray-900 border border-gray-800 rounded-lg
-                         px-3 py-2 text-white text-sm focus:outline-none
-                         focus:border-gray-600 resize-none"
+              placeholder="Say something about yourself…"
+              className="w-full rounded-xl px-3.5 py-2.5 text-sm resize-none transition-all"
+              style={{
+                background: 'var(--color-surface-raised)',
+                border: '1px solid var(--color-border)',
+                color: 'var(--color-fg)',
+                outline: 'none',
+              }}
+              onFocus={e => { e.target.style.borderColor = 'var(--color-brand)'; e.target.style.boxShadow = '0 0 0 3px color-mix(in srgb, var(--color-brand) 15%, transparent)'; }}
+              onBlur={e => { e.target.style.borderColor = 'var(--color-border)'; e.target.style.boxShadow = 'none'; }}
             />
-            <p className="text-xs text-gray-600 mt-1 text-right">{bio.length}/280</p>
+            <p className="text-xs text-right mt-1" style={{ color: 'var(--color-fg-subtle)' }}>{bio.length}/280</p>
           </div>
 
-          {error && <p className="text-red-400 text-sm">{error}</p>}
+          {error && (
+            <div
+              className="rounded-xl px-4 py-3 text-sm"
+              style={{ background: 'var(--color-danger-muted)', color: 'var(--color-danger)', border: '1px solid color-mix(in srgb, var(--color-danger) 25%, transparent)' }}
+            >
+              {error}
+            </div>
+          )}
 
-          <div className="flex gap-3">
+          <div className="flex gap-3 pt-1">
             <button
               type="button"
               onClick={() => router.push('/')}
-              className="flex-1 bg-gray-800 text-gray-200 rounded-lg py-2 text-sm
-                         font-medium hover:bg-gray-700 transition-colors"
+              className="flex-1 rounded-xl py-2.5 text-sm font-medium transition-all"
+              style={{ background: 'var(--color-surface-raised)', color: 'var(--color-fg-muted)', border: '1px solid var(--color-border)' }}
             >
               Back
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="flex-1 bg-white text-gray-950 rounded-lg py-2 text-sm
-                         font-medium hover:bg-gray-100 transition-colors
-                         disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 rounded-xl py-2.5 text-sm font-semibold transition-all"
+              style={{
+                background: 'var(--color-brand)',
+                color: '#fff',
+                cursor: saving ? 'not-allowed' : 'pointer',
+                opacity: saving ? 0.65 : 1,
+              }}
             >
-              {saving ? 'Saving...' : 'Save'}
+              {saving ? 'Saving…' : 'Save changes'}
             </button>
           </div>
         </form>
-      </main>
-    </>
+      </div>
+    </main>
   );
 }
