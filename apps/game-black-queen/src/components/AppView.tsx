@@ -1,5 +1,18 @@
 'use client';
 
+/**
+ * AppView - top-level renderer.
+ *
+ * View routing:
+ *   room exists   -> GameScreen (REJOIN_SUCCESS received)
+ *   timed out     -> Error: no session found, link back to shell
+ *   otherwise     -> Loading: waiting for REJOIN_SUCCESS from server
+ *
+ * Game entry is always via shell lobby. The game app never shows a lobby.
+ * On load: socket connects -> INIT_PLAYER emitted -> server sends REJOIN_SUCCESS
+ * with the active room+game state -> GameScreen renders.
+ */
+
 import { useEffect, useState } from 'react';
 import { useGameStore } from '@/store/gameStore';
 import GameScreen from '@/components/game/GameScreen';
@@ -21,7 +34,7 @@ export default function AppView() {
 
   if (timedOut) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', gap: '16px', color: '#9ca3af' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', gap: 16, color: '#9ca3af' }}>
         <p style={{ margin: 0 }}>No active game session found.</p>
         <a href={`${SHELL_URL}/explore`} style={{ color: '#fff', textDecoration: 'underline' }}>
           Return to lobby

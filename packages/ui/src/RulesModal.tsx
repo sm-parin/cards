@@ -1,19 +1,19 @@
 'use client';
 import { useState } from 'react';
-import { Button } from '@cards/ui';
+import { Button } from './Button';
 
-interface RuleSlide {
+export interface RuleSlide {
   title: string;
   content: string;
 }
 
-interface RulesModalProps {
+export interface RulesModalProps {
   gameName: string;
   rules: RuleSlide[];
   onClose: () => void;
 }
 
-export default function RulesModal({ gameName, rules, onClose }: RulesModalProps) {
+export function RulesModal({ gameName, rules, onClose }: RulesModalProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
   if (!rules.length) return null;
   const slide = rules[currentSlide];
@@ -31,37 +31,21 @@ export default function RulesModal({ gameName, rules, onClose }: RulesModalProps
         className="bg-gray-900 rounded-xl max-w-lg w-full p-8 border border-gray-700 shadow-2xl"
         onClick={e => e.stopPropagation()}
       >
-        {/* Header */}
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-lg font-bold text-white">{gameName} — Rules</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors text-2xl leading-none"
-          >
-            ×
-          </button>
+          <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors text-2xl leading-none">×</button>
         </div>
-
-        {/* Progress pills */}
         <div className="flex gap-1.5 mb-6">
           {rules.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setCurrentSlide(i)}
-              className={`h-1.5 rounded-full transition-all ${
-                i === currentSlide ? 'bg-white w-8' : 'bg-gray-600 w-2'
-              }`}
+            <button key={i} onClick={() => setCurrentSlide(i)}
+              className={`h-1.5 rounded-full transition-all ${i === currentSlide ? 'bg-white w-8' : 'bg-gray-600 w-2'}`}
             />
           ))}
         </div>
-
-        {/* Slide content */}
-        <div className="mb-8 min-h-25">
+        <div className="mb-8 min-h-[100px]">
           <h3 className="text-base font-semibold text-white mb-3">{slide.title}</h3>
           <p className="text-gray-300 leading-relaxed text-sm">{slide.content}</p>
         </div>
-
-        {/* Navigation */}
         <div className="flex gap-3">
           <Button variant="secondary" onClick={handlePrev} className="flex-1">← Prev</Button>
           {currentSlide < rules.length - 1

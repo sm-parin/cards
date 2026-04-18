@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
-import type { GameInfo } from '@cards/config';
+import type { GameInfo } from '@cards/types';
 
 const info: GameInfo = {
   displayName: 'Jack Thief',
   description: "A 2–13 player card game. Discard your pairs, steal cards from your opponent, and whatever you do — don't get caught holding the Jack!",
   minPlayers: 2,
   maxPlayers: 13,
+  gameStartedEvent: 'JT_GAME_STARTED',
   rules: [
     {
       title: 'Objective',

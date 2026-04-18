@@ -213,3 +213,12 @@ export interface LobbyEntry {
 export interface LobbiesListPayload {
   lobbies: LobbyEntry[];
 }
+
+export interface GameInfo {
+  displayName: string;
+  description: string;
+  minPlayers: number;
+  maxPlayers: number;
+  rules: Array<{ title: string; content: string }>;
+  gameStartedEvent: string;
+}

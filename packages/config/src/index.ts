@@ -14,14 +14,4 @@ export const GAME_CONFIG = {
 export type GameType = keyof typeof GAME_CONFIG;
 export type GameConfig = typeof GAME_CONFIG[GameType];
 
-/**
- * Full game metadata returned by each game app's GET /api/game-info endpoint.
- * All game-specific data (rules, player counts, description) lives in the game app only.
- */
-export interface GameInfo {
-  displayName: string;
-  description: string;
-  minPlayers: number;
-  maxPlayers: number;
-  rules: Array<{ title: string; content: string }>;
-}
+export type { GameInfo } from '@cards/types';

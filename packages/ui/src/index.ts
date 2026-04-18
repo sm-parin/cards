@@ -16,5 +16,9 @@ export type { GameHeaderProps }            from './GameHeader';
 export { GameLobbyRoom }                   from './GameLobbyRoom';
 export type { GameLobbyRoomProps }         from './GameLobbyRoom';
 export { getSuit, getValue, getRank, isRed } from './cardUtils';
-
-
+export { AvatarCircle }             from './AvatarCircle';
+export type { AvatarCircleProps }   from './AvatarCircle';
+export { RulesModal }               from './RulesModal';
+export type { RulesModalProps, RuleSlide } from './RulesModal';
+export { LobbyPanel }               from './LobbyPanel';
+export type { LobbyPanelProps, SocketLike } from './LobbyPanel';

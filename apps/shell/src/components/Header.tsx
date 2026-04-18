@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../context/AuthContext';
-import AvatarCircle from './AvatarCircle';
+import { AvatarCircle } from '@cards/ui';
 
 export default function Header() {
   const { user } = useAuth();

@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { updateProfile } from '@cards/auth';
 import { useAuth } from '../../context/AuthContext';
-import AvatarCircle from '../../components/AvatarCircle';
+import { AvatarCircle } from '@cards/ui';
 
 export default function ProfilePage() {
   const router = useRouter();

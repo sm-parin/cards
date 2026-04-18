@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
-import type { GameInfo } from '@cards/config';
+import type { GameInfo } from '@cards/types';
 
 const info: GameInfo = {
   displayName: 'Black Queen',
   description: 'A 5–10 player trick-taking card game. Bid high, choose your partner wisely, and avoid being caught with the Black Queen.',
   minPlayers: 5,
   maxPlayers: 10,
+  gameStartedEvent: 'GAME_STARTED',
   rules: [
     {
       title: 'Objective',

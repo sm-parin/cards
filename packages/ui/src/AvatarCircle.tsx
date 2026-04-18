@@ -27,13 +27,13 @@ function getInitials(name: string | undefined | null): string {
   return trimmed.slice(0, 2).toUpperCase();
 }
 
-interface AvatarCircleProps {
+export interface AvatarCircleProps {
   userId: string | undefined;
   displayName: string | undefined | null;
   size?: number;
 }
 
-export default function AvatarCircle({ userId, displayName, size = 36 }: AvatarCircleProps) {
+export function AvatarCircle({ userId, displayName, size = 36 }: AvatarCircleProps) {
   const safeId = userId || 'default';
   return (
     <div
@@ -53,6 +53,7 @@ export default function AvatarCircle({ userId, displayName, size = 36 }: AvatarC
         cursor: 'pointer',
       }}
     >
-      {getInitials(displayName)}    </div>
+      {getInitials(displayName)}
+    </div>
   );
 }

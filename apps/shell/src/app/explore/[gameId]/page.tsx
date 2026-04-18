@@ -19,6 +19,7 @@ async function fetchGameInfo(url: string, displayName: string): Promise<GameInfo
       minPlayers: 2,
       maxPlayers: 13,
       rules: [],
+      gameStartedEvent: 'GAME_STARTED',
     };
   }
 }
