@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { colors, radii, typography } from '@cards/theme';
 import { useDebounce } from '@cards/hooks';
 import type { LobbyEntry } from '@cards/types';
 import { Button } from './Button';
@@ -19,7 +18,7 @@ export interface GameLobbyProps {
   lobbies: LobbyEntry[];
   pending?: boolean;
 
-  // Labels (optional — fallback text provided)
+  // Labels (optional â€” fallback text provided)
   matchmakeLabel?: string;
   createPublicLabel?: string;
   createPrivateLabel?: string;
@@ -108,42 +107,43 @@ export function GameLobby({
     handleVerifyClose();
   };
 
-  // ── Shared style fragments ───────────────────────────────────────────────
+  // â”€â”€ Shared style helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const inputStyle = {
     width: '100%',
-    borderRadius: radii.xl,
-    border: `1px solid ${colors.bgBorder}`,
-    background: colors.bgPrimary,
-    color: colors.textPrimary,
-    padding: '8px 36px 8px 16px',
-    fontSize: typography.sizeMd,
+    borderRadius: '10px',
+    border: '1px solid var(--color-border, #252535)',
+    background: 'var(--color-bg, #09090e)',
+    color: 'var(--color-fg, #f4f4fb)',
+    padding: '8px 36px 8px 14px',
+    fontSize: '14px',
     outline: 'none',
     boxSizing: 'border-box' as const,
     fontFamily: 'inherit',
+    transition: 'border-color 150ms',
   };
 
   const chipBase = {
     flexShrink: 0 as const,
-    fontSize: typography.sizeSm,
+    fontSize: '12px',
     padding: '4px 12px',
-    borderRadius: radii.pill,
-    border: `1px solid ${colors.bgBorder}`,
-    fontWeight: 500,
-    cursor: 'pointer',
-    transition: 'background 150ms, border-color 150ms',
+    borderRadius: '99px',
+    border: '1px solid var(--color-border, #252535)',
+    fontWeight: 500 as const,
+    cursor: 'pointer' as const,
+    transition: 'background 150ms, border-color 150ms, color 150ms',
   };
 
   const chipActive = {
     ...chipBase,
-    background: colors.accent,
-    color: '#000000',
-    borderColor: colors.accent,
+    background: 'var(--color-surface-raised, #181824)',
+    color: 'var(--color-fg, #f4f4fb)',
+    borderColor: 'var(--color-fg-subtle, #3a3a55)',
   };
 
   const chipInactive = {
     ...chipBase,
-    background: colors.bgPrimary,
-    color: colors.textSecondary,
+    background: 'transparent',
+    color: 'var(--color-fg-muted, #8888a8)',
   };
 
   return (
@@ -151,17 +151,17 @@ export function GameLobby({
       style={{
         display: 'flex',
         overflow: 'hidden',
-        background: colors.bgPrimary,
+        background: 'var(--color-bg, #09090e)',
         height: 'calc(100dvh - 57px)',
-        fontFamily: typography.fontSans,
+        fontFamily: 'var(--font-sans, system-ui, sans-serif)',
       }}
     >
-      {/* ── Left panel ──────────────────────────────────────────────────── */}
+      {/* â”€â”€ Left panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <aside
         style={{
           width: '288px',
           flexShrink: 0,
-          borderRight: `1px solid ${colors.bgBorder}`,
+          borderRight: '1px solid var(--color-border, #252535)',
           display: 'flex',
           flexDirection: 'column',
           gap: '16px',
@@ -171,10 +171,10 @@ export function GameLobby({
       >
         {/* Game title */}
         <div style={{ textAlign: 'center', marginBottom: '8px' }}>
-          <h1 style={{ fontSize: typography.sizeXxl, fontWeight: 700, color: colors.textPrimary, margin: 0 }}>
+          <h1 style={{ fontSize: '24px', fontWeight: 700, color: 'var(--color-fg, #f4f4fb)', margin: 0 }}>
             {title}
           </h1>
-          <p style={{ fontSize: typography.sizeSm, color: colors.textSecondary, marginTop: '4px', marginBottom: 0 }}>
+          <p style={{ fontSize: '12px', color: 'var(--color-fg-muted, #8888a8)', marginTop: '4px', marginBottom: 0 }}>
             {subtitle}
           </p>
         </div>
@@ -183,14 +183,14 @@ export function GameLobby({
           {pending ? loadingLabel : matchmakeLabel}
         </Button>
 
-        <hr style={{ border: 'none', borderTop: `1px solid ${colors.bgBorder}`, margin: 0 }} />
+        <hr style={{ border: 'none', borderTop: `1px solid var(--color-border, #252535)`, margin: 0 }} />
 
         {/* Player count stepper + slider */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <span
             style={{
-              fontSize: typography.sizeXs,
-              color: colors.textSecondary,
+              fontSize: '11px',
+              color: 'var(--color-fg-muted, #8888a8)',
               fontWeight: 500,
               textTransform: 'uppercase',
               letterSpacing: '0.05em',
@@ -206,10 +206,10 @@ export function GameLobby({
               style={{
                 width: '36px',
                 height: '36px',
-                borderRadius: radii.lg,
-                border: `1px solid ${colors.bgBorder}`,
-                background: colors.bgPrimary,
-                color: colors.textPrimary,
+                borderRadius: '10px',
+                border: `1px solid var(--color-border, #252535)`,
+                background: 'var(--color-bg, #09090e)',
+                color: 'var(--color-fg, #f4f4fb)',
                 fontWeight: 700,
                 fontSize: '20px',
                 display: 'flex',
@@ -219,12 +219,12 @@ export function GameLobby({
                 opacity: playerMax <= minPlayers ? 0.4 : 1,
                 flexShrink: 0,
               }}
-            >−</button>
+            >âˆ’</button>
             <span
               style={{
                 fontSize: '30px',
                 fontWeight: 700,
-                color: colors.textPrimary,
+                color: 'var(--color-fg, #f4f4fb)',
                 fontVariantNumeric: 'tabular-nums',
               }}
             >
@@ -236,10 +236,10 @@ export function GameLobby({
               style={{
                 width: '36px',
                 height: '36px',
-                borderRadius: radii.lg,
-                border: `1px solid ${colors.bgBorder}`,
-                background: colors.bgPrimary,
-                color: colors.textPrimary,
+                borderRadius: '10px',
+                border: `1px solid var(--color-border, #252535)`,
+                background: 'var(--color-bg, #09090e)',
+                color: 'var(--color-fg, #f4f4fb)',
                 fontWeight: 700,
                 fontSize: '20px',
                 display: 'flex',
@@ -258,9 +258,9 @@ export function GameLobby({
             max={maxPlayersConfig}
             value={playerMax}
             onChange={(e) => setPlayerMax(Number(e.target.value))}
-            style={{ width: '100%', cursor: 'pointer', accentColor: colors.accent }}
+            style={{ width: '100%', cursor: 'pointer', accentColor: 'var(--color-accent, #e8c84a)' }}
           />
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: typography.sizeSm, color: colors.textSecondary }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--color-fg-muted, #8888a8)' }}>
             <span>{minPlayers}</span>
             <span>{maxPlayersConfig}</span>
           </div>
@@ -275,11 +275,11 @@ export function GameLobby({
         </Button>
       </aside>
 
-      {/* ── Right panel ─────────────────────────────────────────────────── */}
+      {/* â”€â”€ Right panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
         {/* Search bar */}
-        <div style={{ padding: '16px 16px 12px', borderBottom: `1px solid ${colors.bgBorder}` }}>
+        <div style={{ padding: '16px 16px 12px', borderBottom: `1px solid var(--color-border, #252535)` }}>
           <div style={{ position: 'relative' }}>
             <input
               type="text"
@@ -296,15 +296,15 @@ export function GameLobby({
                   right: '10px',
                   top: '50%',
                   transform: 'translateY(-50%)',
-                  color: colors.textSecondary,
+                  color: 'var(--color-fg-muted, #8888a8)',
                   background: 'none',
                   border: 'none',
                   cursor: 'pointer',
                   padding: 0,
                   lineHeight: 1,
-                  fontSize: typography.sizeSm,
+                  fontSize: '12px',
                 }}
-              >✕</button>
+              >âœ•</button>
             )}
           </div>
         </div>
@@ -316,11 +316,11 @@ export function GameLobby({
             alignItems: 'center',
             gap: '8px',
             padding: '8px 16px',
-            borderBottom: `1px solid ${colors.bgBorder}`,
+            borderBottom: `1px solid var(--color-border, #252535)`,
             overflowX: 'auto',
           }}
         >
-          <span style={{ fontSize: typography.sizeSm, color: colors.textSecondary, flexShrink: 0 }}>
+          <span style={{ fontSize: '12px', color: 'var(--color-fg-muted, #8888a8)', flexShrink: 0 }}>
             Filters:
           </span>
 
@@ -347,7 +347,7 @@ export function GameLobby({
 
           <div style={{ flex: 1 }} />
 
-          <span style={{ fontSize: typography.sizeSm, color: colors.textSecondary, flexShrink: 0 }}>
+          <span style={{ fontSize: '12px', color: 'var(--color-fg-muted, #8888a8)', flexShrink: 0 }}>
             Sort:
           </span>
           <select
@@ -355,11 +355,11 @@ export function GameLobby({
             onChange={(e) => setSortOrder(e.target.value as 'fill-desc' | 'fill-asc')}
             style={{
               flexShrink: 0,
-              fontSize: typography.sizeSm,
-              background: colors.bgPrimary,
-              color: colors.textPrimary,
-              border: `1px solid ${colors.bgBorder}`,
-              borderRadius: radii.md,
+              fontSize: '12px',
+              background: 'var(--color-bg, #09090e)',
+              color: 'var(--color-fg, #f4f4fb)',
+              border: `1px solid var(--color-border, #252535)`,
+              borderRadius: '8px',
               padding: '4px 8px',
               outline: 'none',
               cursor: 'pointer',
@@ -373,8 +373,8 @@ export function GameLobby({
             onClick={onRefresh}
             style={{
               flexShrink: 0,
-              fontSize: typography.sizeSm,
-              color: colors.accent,
+              fontSize: '12px',
+              color: 'var(--color-accent, #e8c84a)',
               background: 'none',
               border: 'none',
               cursor: 'pointer',
@@ -391,8 +391,8 @@ export function GameLobby({
           {filteredLobbies.length === 0 ? (
             <p
               style={{
-                fontSize: typography.sizeMd,
-                color: colors.textSecondary,
+                fontSize: '14px',
+                color: 'var(--color-fg-muted, #8888a8)',
                 textAlign: 'center',
                 padding: '48px 0',
                 margin: 0,
@@ -401,14 +401,14 @@ export function GameLobby({
               No rooms available
             </p>
           ) : (
-            <table style={{ width: '100%', fontSize: typography.sizeMd, borderCollapse: 'collapse' }}>
+            <table style={{ width: '100%', fontSize: '14px', borderCollapse: 'collapse' }}>
               <thead>
                 <tr
                   style={{
                     position: 'sticky',
                     top: 0,
-                    background: colors.bgPrimary,
-                    borderBottom: `1px solid ${colors.bgBorder}`,
+                    background: 'var(--color-bg, #09090e)',
+                    borderBottom: `1px solid var(--color-border, #252535)`,
                   }}
                 >
                   {(['Room', 'Players', 'Action'] as const).map((h, i) => (
@@ -416,8 +416,8 @@ export function GameLobby({
                       key={h}
                       style={{
                         padding: '12px 16px',
-                        fontSize: typography.sizeSm,
-                        color: colors.textSecondary,
+                        fontSize: '12px',
+                        color: 'var(--color-fg-muted, #8888a8)',
                         fontWeight: 500,
                         textAlign: i === 2 ? 'right' : 'left',
                       }}
@@ -439,15 +439,15 @@ export function GameLobby({
                       onMouseEnter={() => setHoveredRow(lobby.roomId)}
                       onMouseLeave={() => setHoveredRow(null)}
                       style={{
-                        borderBottom: `1px solid ${colors.bgBorder}`,
-                        background: isHovered ? colors.bgSurface : 'transparent',
+                        borderBottom: `1px solid var(--color-border, #252535)`,
+                        background: isHovered ? 'var(--color-surface, #111118)' : 'transparent',
                         transition: 'background 150ms',
                       }}
                     >
                       <td
                         style={{
                           padding: '12px 16px',
-                          color: colors.textPrimary,
+                          color: 'var(--color-fg, #f4f4fb)',
                           fontWeight: 500,
                         }}
                       >
@@ -456,7 +456,7 @@ export function GameLobby({
                       <td
                         style={{
                           padding: '12px 16px',
-                          color: colors.textSecondary,
+                          color: 'var(--color-fg-muted, #8888a8)',
                           fontVariantNumeric: 'tabular-nums',
                         }}
                       >
@@ -479,13 +479,13 @@ export function GameLobby({
                                   }
                                   style={{
                                     width: '112px',
-                                    borderRadius: radii.md,
-                                    border: `1px solid ${colors.bgBorder}`,
-                                    background: colors.bgPrimary,
-                                    color: colors.textPrimary,
+                                    borderRadius: '8px',
+                                    border: `1px solid var(--color-border, #252535)`,
+                                    background: 'var(--color-bg, #09090e)',
+                                    color: 'var(--color-fg, #f4f4fb)',
                                     padding: '4px 24px 4px 8px',
-                                    fontSize: typography.sizeSm,
-                                    fontFamily: typography.fontMono,
+                                    fontSize: '12px',
+                                    fontFamily: 'var(--font-mono, monospace)',
                                     letterSpacing: '0.15em',
                                     outline: 'none',
                                     boxSizing: 'border-box' as const,
@@ -498,22 +498,22 @@ export function GameLobby({
                                     right: '6px',
                                     top: '50%',
                                     transform: 'translateY(-50%)',
-                                    color: colors.textSecondary,
+                                    color: 'var(--color-fg-muted, #8888a8)',
                                     background: 'none',
                                     border: 'none',
                                     cursor: 'pointer',
                                     padding: 0,
-                                    fontSize: typography.sizeSm,
+                                    fontSize: '12px',
                                     lineHeight: 1,
                                   }}
-                                >✕</button>
+                                >âœ•</button>
                               </div>
                               <button
                                 onClick={handleJoinVerified}
                                 disabled={verifyCode.length !== 6 || pending}
                                 style={{
-                                  fontSize: typography.sizeSm,
-                                  color: colors.accent,
+                                  fontSize: '12px',
+                                  color: 'var(--color-accent, #e8c84a)',
                                   fontWeight: 600,
                                   background: 'none',
                                   border: 'none',
@@ -530,9 +530,9 @@ export function GameLobby({
                             <button
                               onClick={() => handleVerifyClick(lobby.roomId)}
                               style={{
-                                fontSize: typography.sizeSm,
+                                fontSize: '12px',
                                 fontWeight: 600,
-                                color: colors.warning,
+                                color: 'var(--color-warning, #fbbf24)',
                                 background: 'none',
                                 border: 'none',
                                 cursor: 'pointer',
@@ -548,8 +548,8 @@ export function GameLobby({
                             onClick={() => { if (!pending) onJoinPublicLobby(lobby.roomId); }}
                             disabled={pending}
                             style={{
-                              fontSize: typography.sizeSm,
-                              color: colors.accent,
+                              fontSize: '12px',
+                              color: 'var(--color-accent, #e8c84a)',
                               fontWeight: 600,
                               background: 'none',
                               border: 'none',

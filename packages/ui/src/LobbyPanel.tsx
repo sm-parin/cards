@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from './Button';
 import { AvatarCircle } from './AvatarCircle';
 import { CLIENT_EVENTS, SERVER_EVENTS } from '@cards/types';
@@ -103,163 +103,372 @@ export function LobbyPanel({ gameInfo, getSocket, gameUrl, token }: LobbyPanelPr
       return sortOrder === 'newest' ? -1 : 1;
     });
 
+  // ── Inline style helpers ──────────────────────────────────────────────────
+  const S = {
+    container: {
+      background: 'var(--color-surface, #111118)',
+      border: '1px solid var(--color-border, #252535)',
+      borderRadius: '16px',
+      overflow: 'hidden',
+    } as React.CSSProperties,
+    tabBar: {
+      display: 'flex',
+      padding: '6px',
+      gap: '2px',
+      background: 'var(--color-bg, #09090e)',
+      borderBottom: '1px solid var(--color-border, #252535)',
+    } as React.CSSProperties,
+    tabBtn: (active: boolean): React.CSSProperties => ({
+      flex: 1,
+      padding: '7px 0',
+      fontSize: '13px',
+      fontWeight: 600,
+      letterSpacing: '0.01em',
+      border: 'none',
+      borderRadius: '10px',
+      cursor: 'pointer',
+      transition: 'background 150ms, color 150ms',
+      background: active ? 'var(--color-surface, #111118)' : 'transparent',
+      color: active ? 'var(--color-fg, #f4f4fb)' : 'var(--color-fg-muted, #8888a8)',
+      boxShadow: active ? '0 1px 4px rgba(0,0,0,0.4)' : 'none',
+    }),
+    body: {
+      padding: '20px',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '16px',
+    } as React.CSSProperties,
+    label: {
+      fontSize: '11px',
+      fontWeight: 600,
+      letterSpacing: '0.07em',
+      textTransform: 'uppercase' as const,
+      color: 'var(--color-fg-muted, #8888a8)',
+    },
+    countBadge: {
+      fontSize: '13px',
+      fontWeight: 700,
+      tabularNums: true,
+      color: 'var(--color-fg, #f4f4fb)',
+      background: 'var(--color-surface-raised, #181824)',
+      border: '1px solid var(--color-border, #252535)',
+      padding: '1px 10px',
+      borderRadius: '99px',
+    } as React.CSSProperties,
+    input: {
+      width: '100%',
+      background: 'var(--color-bg, #09090e)',
+      border: '1px solid var(--color-border, #252535)',
+      borderRadius: '10px',
+      padding: '8px 12px',
+      fontSize: '13px',
+      color: 'var(--color-fg, #f4f4fb)',
+      outline: 'none',
+      boxSizing: 'border-box' as const,
+      fontFamily: 'inherit',
+      transition: 'border-color 150ms',
+    },
+    infoRow: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    } as React.CSSProperties,
+    copyBtn: (active: boolean): React.CSSProperties => ({
+      fontSize: '11px',
+      fontWeight: 500,
+      color: active ? 'var(--color-success, #4ade80)' : 'var(--color-fg-muted, #8888a8)',
+      background: 'var(--color-surface-raised, #181824)',
+      border: '1px solid var(--color-border, #252535)',
+      borderRadius: '6px',
+      padding: '2px 8px',
+      cursor: 'pointer',
+      transition: 'color 150ms',
+    }),
+    typePill: (isPrivate: boolean): React.CSSProperties => ({
+      fontSize: '11px',
+      fontWeight: 600,
+      padding: '2px 10px',
+      borderRadius: '99px',
+      background: isPrivate ? 'rgba(251,146,60,0.12)' : 'rgba(99,102,241,0.12)',
+      color: isPrivate ? '#fb923c' : 'var(--color-brand, #6366f1)',
+      border: `1px solid ${isPrivate ? 'rgba(251,146,60,0.25)' : 'rgba(99,102,241,0.25)'}`,
+    }),
+    filterChip: (active: boolean): React.CSSProperties => ({
+      fontSize: '12px',
+      fontWeight: 500,
+      padding: '4px 12px',
+      borderRadius: '99px',
+      border: '1px solid var(--color-border, #252535)',
+      cursor: 'pointer',
+      transition: 'all 150ms',
+      background: active ? 'var(--color-surface-raised, #181824)' : 'transparent',
+      color: active ? 'var(--color-fg, #f4f4fb)' : 'var(--color-fg-muted, #8888a8)',
+    }),
+    tableHeader: {
+      display: 'grid',
+      gridTemplateColumns: '1fr auto auto auto',
+      gap: '12px',
+      padding: '8px 14px',
+      background: 'var(--color-bg, #09090e)',
+      borderBottom: '1px solid var(--color-border, #252535)',
+      fontSize: '10px',
+      fontWeight: 700,
+      letterSpacing: '0.08em',
+      textTransform: 'uppercase' as const,
+      color: 'var(--color-fg-subtle, #3a3a55)',
+    },
+    tableRow: (idx: number): React.CSSProperties => ({
+      display: 'grid',
+      gridTemplateColumns: '1fr auto auto auto',
+      gap: '12px',
+      alignItems: 'center',
+      padding: '10px 14px',
+      fontSize: '13px',
+      borderTop: idx !== 0 ? '1px solid var(--color-border, #252535)' : 'none',
+      transition: 'background 120ms',
+      cursor: 'default',
+    }),
+  };
+
   return (
-    <div className="bg-gray-800/60 rounded-xl border border-gray-700/50 overflow-hidden">
-      <div className="flex border-b border-gray-700/50">
+    <div style={S.container}>
+      {/* ── Tab bar ── */}
+      <div style={S.tabBar}>
         {(['create', 'join'] as Tab[]).map(tab => (
-          <button key={tab} onClick={() => setActiveTab(tab)}
-            className={`flex-1 py-3.5 text-sm font-medium transition-colors ${activeTab === tab ? 'text-white border-b-2 border-white bg-gray-800/40' : 'text-gray-400 hover:text-gray-300'}`}>
+          <button key={tab} onClick={() => setActiveTab(tab)} style={S.tabBtn(activeTab === tab)}>
             {tab === 'create' ? 'Create Lobby' : 'Join Lobby'}
           </button>
         ))}
       </div>
-      <div className="p-6">
+
+      <div style={S.body}>
+        {/* ════ CREATE TAB ════ */}
         {activeTab === 'create' && (
-          <div>
+          <>
             {!createdRoom ? (
-              <div className="space-y-5">
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="text-sm text-gray-300 font-medium">Players</label>
-                    <span className="text-white font-semibold tabular-nums text-sm bg-gray-700 px-2.5 py-0.5 rounded-full">{playerCount}</span>
+              <>
+                {/* Player count slider */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={S.label}>Players</span>
+                    <span style={S.countBadge}>{playerCount}</span>
                   </div>
-                  <input type="range" min={gameInfo.minPlayers} max={gameInfo.maxPlayers} value={playerCount}
-                    onChange={e => setPlayerCount(Number(e.target.value))} className="w-full accent-white" disabled={creatingLobby} />
-                  <div className="flex justify-between text-xs text-gray-500 mt-1">
-                    <span>{gameInfo.minPlayers}</span><span>{gameInfo.maxPlayers}</span>
+                  <input
+                    type="range"
+                    min={gameInfo.minPlayers}
+                    max={gameInfo.maxPlayers}
+                    value={playerCount}
+                    onChange={e => setPlayerCount(Number(e.target.value))}
+                    disabled={creatingLobby}
+                    style={{ width: '100%', accentColor: 'var(--color-brand, #6366f1)', cursor: creatingLobby ? 'not-allowed' : 'pointer' }}
+                  />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--color-fg-subtle, #3a3a55)' }}>
+                    <span>{gameInfo.minPlayers}</span>
+                    <span>{gameInfo.maxPlayers}</span>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-3 pt-1">
-                  <Button variant="primary" onClick={handleCreatePublic} disabled={creatingLobby} className="w-full">{creatingLobby ? '...' : 'Public'}</Button>
-                  <Button variant="secondary" onClick={handleCreatePrivate} disabled={creatingLobby} className="w-full">{creatingLobby ? '...' : 'Private'}</Button>
+
+                {/* Create buttons */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                  <Button variant="primary" fullWidth onClick={handleCreatePublic} disabled={creatingLobby} loading={creatingLobby}>
+                    Public
+                  </Button>
+                  <Button variant="secondary" fullWidth onClick={handleCreatePrivate} disabled={creatingLobby} loading={creatingLobby}>
+                    Private
+                  </Button>
                 </div>
-              </div>
+              </>
             ) : (
-              <div className="space-y-5">
-                <div className="bg-gray-900/60 rounded-lg p-4 space-y-3 border border-gray-700/40">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-400 font-medium uppercase tracking-wide">Room ID</span>
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-sm text-white">{createdRoom.roomId}</span>
-                      <button onClick={() => handleCopy(createdRoom.roomId, 'id')} className="text-xs text-gray-400 hover:text-white transition-colors border border-gray-600 rounded px-1.5 py-0.5">{copied === 'id' ? '✓' : 'copy'}</button>
+              <>
+                {/* Room info card */}
+                <div style={{ background: 'var(--color-bg, #09090e)', border: '1px solid var(--color-border, #252535)', borderRadius: '12px', padding: '14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <div style={S.infoRow}>
+                    <span style={S.label}>Room ID</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontFamily: 'ui-monospace, monospace', fontSize: '12px', color: 'var(--color-fg, #f4f4fb)', letterSpacing: '0.05em' }}>{createdRoom.roomId}</span>
+                      <button onClick={() => handleCopy(createdRoom.roomId, 'id')} style={S.copyBtn(copied === 'id')}>{copied === 'id' ? '✓ Copied' : 'Copy'}</button>
                     </div>
                   </div>
                   {createdRoom.isPrivate && createdRoom.passkey && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-gray-400 font-medium uppercase tracking-wide">Passkey</span>
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-sm text-white tracking-widest">{createdRoom.passkey}</span>
-                        <button onClick={() => handleCopy(createdRoom.passkey!, 'passkey')} className="text-xs text-gray-400 hover:text-white transition-colors border border-gray-600 rounded px-1.5 py-0.5">{copied === 'passkey' ? '✓' : 'copy'}</button>
+                    <div style={S.infoRow}>
+                      <span style={S.label}>Passkey</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontFamily: 'ui-monospace, monospace', fontSize: '13px', fontWeight: 700, color: 'var(--color-fg, #f4f4fb)', letterSpacing: '0.2em' }}>{createdRoom.passkey}</span>
+                        <button onClick={() => handleCopy(createdRoom.passkey!, 'passkey')} style={S.copyBtn(copied === 'passkey')}>{copied === 'passkey' ? '✓ Copied' : 'Copy'}</button>
                       </div>
                     </div>
                   )}
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-400 font-medium uppercase tracking-wide">Type</span>
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${createdRoom.isPrivate ? 'bg-orange-500/20 text-orange-300 border border-orange-500/30' : 'bg-blue-500/20 text-blue-300 border border-blue-500/30'}`}>
-                      {createdRoom.isPrivate ? 'Private' : 'Public'}
-                    </span>
+                  <div style={S.infoRow}>
+                    <span style={S.label}>Visibility</span>
+                    <span style={S.typePill(createdRoom.isPrivate)}>{createdRoom.isPrivate ? 'Private' : 'Public'}</span>
                   </div>
                 </div>
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm text-gray-300 font-medium">Players</span>
-                    <span className="text-xs text-gray-400 tabular-nums">{createdRoom.players.length}/{createdRoom.maxPlayers}</span>
+
+                {/* Player roster */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={S.label}>Players</span>
+                    <span style={{ fontSize: '12px', color: 'var(--color-fg-muted, #8888a8)', fontVariantNumeric: 'tabular-nums' }}>
+                      {createdRoom.players.length}/{createdRoom.maxPlayers}
+                    </span>
                   </div>
-                  <div className="grid grid-cols-5 gap-2">
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
                     {Array.from({ length: createdRoom.maxPlayers }).map((_, i) => {
                       const player = createdRoom.players[i];
                       return player ? (
-                        <div key={player.id} className="flex flex-col items-center gap-1.5">
-                          <AvatarCircle userId={player.id} displayName={player.nickname} size={38} />
-                          <span className="text-xs text-gray-300 text-center truncate w-full leading-tight">{player.nickname || '?'}</span>
+                        <div key={player.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px', width: '44px' }}>
+                          <AvatarCircle userId={player.id} displayName={player.nickname} size={36} />
+                          <span style={{ fontSize: '10px', color: 'var(--color-fg-muted, #8888a8)', textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%' }}>{player.nickname || '?'}</span>
                         </div>
                       ) : (
-                        <div key={`empty-${i}`} className="flex flex-col items-center gap-1.5 opacity-30">
-                          <div style={{ width: 38, height: 38 }} className="rounded-full border-2 border-dashed border-gray-500 flex items-center justify-center">
-                            <span className="text-gray-500 text-lg">+</span>
+                        <div key={`empty-${i}`} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px', width: '44px', opacity: 0.25 }}>
+                          <div style={{ width: 36, height: 36, borderRadius: '50%', border: '1.5px dashed var(--color-fg-subtle, #3a3a55)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <span style={{ fontSize: '16px', color: 'var(--color-fg-subtle, #3a3a55)', lineHeight: 1 }}>+</span>
                           </div>
-                          <span className="text-xs text-gray-500 text-center">waiting</span>
+                          <span style={{ fontSize: '10px', color: 'var(--color-fg-subtle, #3a3a55)', textAlign: 'center' }}>—</span>
                         </div>
                       );
                     })}
                   </div>
                   {createdRoom.players.length < createdRoom.maxPlayers && (
-                    <p className="text-xs text-gray-500 mt-3">
+                    <p style={{ fontSize: '12px', color: 'var(--color-fg-subtle, #3a3a55)', margin: 0 }}>
                       Waiting for {createdRoom.maxPlayers - createdRoom.players.length} more player{createdRoom.maxPlayers - createdRoom.players.length !== 1 ? 's' : ''}…
                     </p>
                   )}
                 </div>
-                <div className="flex gap-3 pt-1">
-                  <Button variant="ghost" onClick={handleLeaveRoom} className="flex-1">Leave</Button>
-                  <Button variant="primary" onClick={handleStartGame} disabled={createdRoom.players.length !== createdRoom.maxPlayers} className="flex-1">Start Game</Button>
+
+                {/* Actions */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '10px' }}>
+                  <Button variant="ghost" fullWidth onClick={handleLeaveRoom}>Leave</Button>
+                  <Button variant="primary" fullWidth onClick={handleStartGame} disabled={createdRoom.players.length !== createdRoom.maxPlayers}>
+                    Start Game
+                  </Button>
                 </div>
-              </div>
+              </>
             )}
-          </div>
+          </>
         )}
+
+        {/* ════ JOIN TAB ════ */}
         {activeTab === 'join' && (
-          <div className="space-y-4">
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <input type="text" placeholder="Search by creator…" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-                  className="w-full bg-gray-900/60 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-gray-500" />
-                {searchQuery && <button onClick={() => setSearchQuery('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white">×</button>}
+          <>
+            {/* Search + Quick Match */}
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <div style={{ flex: 1, position: 'relative' }}>
+                <input
+                  type="text"
+                  placeholder="Search by creator…"
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  style={{ ...S.input, paddingRight: searchQuery ? '32px' : '12px' }}
+                  onFocus={e => (e.currentTarget.style.borderColor = 'var(--color-brand, #6366f1)')}
+                  onBlur={e => (e.currentTarget.style.borderColor = 'var(--color-border, #252535)')}
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-fg-muted, #8888a8)', fontSize: '16px', lineHeight: 1, padding: '2px' }}
+                  >×</button>
+                )}
               </div>
-              <Button variant="primary" onClick={handleQuickMatch} className="shrink-0">Quick Match</Button>
+              <Button variant="primary" onClick={handleQuickMatch} size="md">Quick Match</Button>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="flex rounded-lg border border-gray-700 overflow-hidden text-xs font-medium">
-                <button onClick={() => setShowPublic(v => !v)} className={`px-3 py-1.5 transition-colors ${showPublic ? 'bg-blue-600/30 text-blue-300 border-r border-gray-700' : 'bg-transparent text-gray-500 border-r border-gray-700 hover:text-gray-300'}`}>Public</button>
-                <button onClick={() => setShowPrivate(v => !v)} className={`px-3 py-1.5 transition-colors ${showPrivate ? 'bg-orange-600/20 text-orange-300' : 'bg-transparent text-gray-500 hover:text-gray-300'}`}>Private</button>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="flex flex-col gap-0.5">
-                  <button type="button" onClick={() => setExactPlayerCount(prev => { const cur = prev ?? gameInfo.minPlayers; return cur < gameInfo.maxPlayers ? cur + 1 : cur; })} className="w-5 h-4 flex items-center justify-center text-gray-400 hover:text-white hover:bg-gray-700 rounded transition-colors text-[10px] leading-none">▲</button>
-                  <button type="button" onClick={() => setExactPlayerCount(prev => { if (prev === null || prev <= gameInfo.minPlayers) return null; return prev - 1; })} className="w-5 h-4 flex items-center justify-center text-gray-400 hover:text-white hover:bg-gray-700 rounded transition-colors text-[10px] leading-none">▼</button>
+
+            {/* Filters */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px' }}>
+              <button onClick={() => setShowPublic(v => !v)} style={S.filterChip(showPublic)}>Public</button>
+              <button onClick={() => setShowPrivate(v => !v)} style={S.filterChip(showPrivate)}>Private</button>
+
+              {/* Player count stepper */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginLeft: '2px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setExactPlayerCount(prev => { const cur = prev ?? gameInfo.minPlayers; return cur < gameInfo.maxPlayers ? cur + 1 : cur; })}
+                    style={{ width: 18, height: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-fg-muted, #8888a8)', fontSize: '9px', lineHeight: 1, padding: '0' }}
+                  >▲</button>
+                  <button
+                    type="button"
+                    onClick={() => setExactPlayerCount(prev => { if (prev === null || prev <= gameInfo.minPlayers) return null; return prev - 1; })}
+                    style={{ width: 18, height: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-fg-muted, #8888a8)', fontSize: '9px', lineHeight: 1, padding: '0' }}
+                  >▼</button>
                 </div>
-                <button type="button" onClick={() => setExactPlayerCount(null)} className={`text-sm font-medium tabular-nums transition-colors min-w-[72px] text-left ${exactPlayerCount !== null ? 'text-white' : 'text-gray-500'}`}>
-                  {exactPlayerCount !== null ? `${exactPlayerCount} Players` : 'Any players'}
+                <button
+                  type="button"
+                  onClick={() => setExactPlayerCount(null)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 500, color: exactPlayerCount !== null ? 'var(--color-fg, #f4f4fb)' : 'var(--color-fg-muted, #8888a8)', whiteSpace: 'nowrap', padding: '0' }}
+                >
+                  {exactPlayerCount !== null ? `${exactPlayerCount} players` : 'Any players'}
                 </button>
               </div>
-              <select value={sortOrder} onChange={e => setSortOrder(e.target.value as SortOrder)} className="ml-auto px-2 py-1.5 text-xs bg-gray-900/60 border border-gray-700 rounded-lg text-gray-300 focus:outline-none focus:border-gray-500">
+
+              {/* Sort */}
+              <select
+                value={sortOrder}
+                onChange={e => setSortOrder(e.target.value as SortOrder)}
+                style={{ marginLeft: 'auto', padding: '4px 10px', fontSize: '12px', background: 'var(--color-bg, #09090e)', border: '1px solid var(--color-border, #252535)', borderRadius: '8px', color: 'var(--color-fg-muted, #8888a8)', outline: 'none', cursor: 'pointer' }}
+              >
                 <option value="oldest">Oldest first</option>
                 <option value="newest">Newest first</option>
                 <option value="fastest">Filling fastest</option>
               </select>
             </div>
-            <div className="rounded-lg border border-gray-700/40 overflow-hidden">
-              <div className="grid grid-cols-[1fr_auto_auto_auto] gap-3 px-4 py-2 bg-gray-900/40 text-xs text-gray-500 font-medium uppercase tracking-wide border-b border-gray-700/40">
-                <span>Host</span><span className="text-center">Players</span><span className="text-center">Type</span><span />
+
+            {/* Lobby table */}
+            <div style={{ background: 'var(--color-bg, #09090e)', border: '1px solid var(--color-border, #252535)', borderRadius: '12px', overflow: 'hidden' }}>
+              <div style={S.tableHeader}>
+                <span>Host</span>
+                <span style={{ textAlign: 'center' }}>Players</span>
+                <span>Type</span>
+                <span />
               </div>
+
               {loadingLobbies ? (
-                <div className="px-4 py-8 text-center text-sm text-gray-500">Loading...</div>
+                <div style={{ padding: '28px 16px', textAlign: 'center', fontSize: '13px', color: 'var(--color-fg-subtle, #3a3a55)' }}>
+                  Loading…
+                </div>
               ) : filteredLobbies.length === 0 ? (
-                <div className="px-4 py-8 text-center text-sm text-gray-500">{lobbies.length === 0 ? 'No open lobbies right now.' : 'No lobbies match your filters.'}</div>
+                <div style={{ padding: '28px 16px', textAlign: 'center', fontSize: '13px', color: 'var(--color-fg-subtle, #3a3a55)' }}>
+                  {lobbies.length === 0 ? 'No open lobbies right now.' : 'No lobbies match your filters.'}
+                </div>
               ) : (
                 filteredLobbies.map((lobby, idx) => {
                   const fillPct = (lobby.playerCount / lobby.maxPlayers) * 100;
                   return (
-                    <div key={lobby.roomId} className={`grid grid-cols-[1fr_auto_auto_auto] gap-3 items-center px-4 py-3 text-sm transition-colors hover:bg-gray-700/20 ${idx !== 0 ? 'border-t border-gray-700/30' : ''}`}>
-                      <span className="text-white font-medium truncate">{lobby.creatorName || 'Unknown'}</span>
-                      <div className="flex flex-col items-center gap-1 min-w-[52px]">
-                        <span className="text-gray-300 tabular-nums text-xs">{lobby.playerCount}/{lobby.maxPlayers}</span>
-                        <div className="w-full h-1 bg-gray-700 rounded-full overflow-hidden">
-                          <div className="h-full bg-green-500 rounded-full transition-all" style={{ width: `${fillPct}%` }} />
+                    <div
+                      key={lobby.roomId}
+                      style={S.tableRow(idx)}
+                      onMouseEnter={e => (e.currentTarget.style.background = 'var(--color-surface-raised, #181824)')}
+                      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                    >
+                      <span style={{ fontWeight: 500, color: 'var(--color-fg, #f4f4fb)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {lobby.creatorName || 'Unknown'}
+                      </span>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', minWidth: '48px' }}>
+                        <span style={{ fontSize: '12px', color: 'var(--color-fg-muted, #8888a8)', fontVariantNumeric: 'tabular-nums' }}>{lobby.playerCount}/{lobby.maxPlayers}</span>
+                        <div style={{ width: '100%', height: '3px', background: 'var(--color-surface-raised, #181824)', borderRadius: '99px', overflow: 'hidden' }}>
+                          <div style={{ height: '100%', width: `${fillPct}%`, background: 'var(--color-success, #4ade80)', borderRadius: '99px', transition: 'width 300ms ease' }} />
                         </div>
                       </div>
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${lobby.isPrivate ? 'bg-orange-500/20 text-orange-300 border border-orange-500/30' : 'bg-blue-500/20 text-blue-300 border border-blue-500/30'}`}>
-                        {lobby.isPrivate ? 'Private' : 'Public'}
-                      </span>
-                      <Button variant="secondary" onClick={() => handleJoinPublicLobby(lobby.roomId)} className="!py-1 !px-3 !text-xs">Join</Button>
+                      <span style={S.typePill(lobby.isPrivate)}>{lobby.isPrivate ? 'Private' : 'Public'}</span>
+                      <Button variant="secondary" size="sm" onClick={() => handleJoinPublicLobby(lobby.roomId)}>Join</Button>
                     </div>
                   );
                 })
               )}
             </div>
-            <button onClick={fetchLobbies} disabled={loadingLobbies} className="text-xs text-gray-500 hover:text-gray-300 transition-colors disabled:opacity-50">
-              {loadingLobbies ? 'Refreshing\u2026' : '\u21bb Refresh'}
+
+            {/* Refresh */}
+            <button
+              onClick={fetchLobbies}
+              disabled={loadingLobbies}
+              style={{ background: 'none', border: 'none', cursor: loadingLobbies ? 'not-allowed' : 'pointer', fontSize: '12px', color: 'var(--color-fg-subtle, #3a3a55)', padding: '0', textAlign: 'left', transition: 'color 150ms', opacity: loadingLobbies ? 0.5 : 1 }}
+              onMouseEnter={e => !loadingLobbies && (e.currentTarget.style.color = 'var(--color-fg-muted, #8888a8)')}
+              onMouseLeave={e => (e.currentTarget.style.color = 'var(--color-fg-subtle, #3a3a55)')}
+            >
+              {loadingLobbies ? 'Refreshing…' : '↻ Refresh'}
             </button>
-          </div>
+          </>
         )}
       </div>
     </div>

@@ -1,7 +1,6 @@
 'use client';
 
 import type { RoomPlayer } from '@cards/types';
-import { colors, radii, typography } from '@cards/theme';
 import { Button } from './Button';
 import { RoomPlayerList } from './RoomPlayerList';
 
@@ -71,9 +70,9 @@ export function GameLobbyRoom({
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        background: colors.bgPrimary,
+        background: 'var(--color-bg, #0a0a0f)',
         padding: '0 16px',
-        fontFamily: typography.fontSans,
+        fontFamily: 'var(--font-sans, system-ui, sans-serif)',
       }}
     >
       <div
@@ -86,28 +85,21 @@ export function GameLobbyRoom({
         }}
       >
         {/* ── Header ─────────────────────────────────────────────────── */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-          <h2
-            style={{
-              fontSize: typography.sizeXxl,
-              fontWeight: 700,
-              color: colors.textPrimary,
-              margin: 0,
-            }}
-          >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <h2 style={{ fontSize: '24px', fontWeight: 700, color: 'var(--color-fg, #f4f4fb)', margin: 0 }}>
             {titleLabel}
           </h2>
-          <p style={{ fontSize: typography.sizeSm, color: colors.textSecondary, margin: 0 }}>
-            {roomIdLabel}: {room.roomId}
+          <p style={{ fontSize: '12px', color: 'var(--color-fg-muted, #8888a8)', margin: 0 }}>
+            {roomIdLabel}: <span style={{ fontFamily: 'ui-monospace, monospace', letterSpacing: '0.04em' }}>{room.roomId}</span>
           </p>
           {showPasskey && (
             <p
               style={{
-                fontSize: typography.sizeSm,
-                fontFamily: typography.fontMono,
-                fontWeight: 600,
-                color: colors.accent,
-                letterSpacing: '0.15em',
+                fontSize: '13px',
+                fontFamily: 'ui-monospace, monospace',
+                fontWeight: 700,
+                color: 'var(--color-accent, #e8c84a)',
+                letterSpacing: '0.18em',
                 margin: 0,
               }}
             >
@@ -117,27 +109,25 @@ export function GameLobbyRoom({
         </div>
 
         {/* ── Player count ─────────────────────────────────────────────── */}
-        <p
-          style={{
-            fontSize: typography.sizeLg,
-            fontWeight: 600,
-            color: colors.textPrimary,
-            margin: 0,
-          }}
-        >
-          {playerCount}/{room.maxPlayers} {playersLabel}
-        </p>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <p style={{ fontSize: '16px', fontWeight: 600, color: 'var(--color-fg, #f4f4fb)', margin: 0 }}>
+            {playerCount}/{room.maxPlayers} {playersLabel}
+          </p>
+          <div style={{ width: '80px', height: '4px', background: 'var(--color-surface-raised, #181824)', borderRadius: '99px', overflow: 'hidden' }}>
+            <div style={{ height: '100%', width: `${(playerCount / room.maxPlayers) * 100}%`, background: 'var(--color-success, #4ade80)', borderRadius: '99px', transition: 'width 400ms ease' }} />
+          </div>
+        </div>
 
         {/* ── Creator: max players picker ──────────────────────────────── */}
         {isCreator && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             <span
               style={{
-                fontSize: typography.sizeXs,
-                color: colors.textSecondary,
-                fontWeight: 500,
+                fontSize: '11px',
+                color: 'var(--color-fg-muted, #8888a8)',
+                fontWeight: 600,
                 textTransform: 'uppercase',
-                letterSpacing: '0.05em',
+                letterSpacing: '0.07em',
               }}
             >
               {maxPlayersLabel}
@@ -152,17 +142,17 @@ export function GameLobbyRoom({
                     onClick={() => onChangeMaxPlayers(n)}
                     disabled={isDisabled}
                     style={{
-                      width: '36px',
-                      height: '36px',
-                      borderRadius: radii.lg,
-                      border: `1px solid ${isSelected ? colors.accent : colors.bgBorder}`,
-                      background: isSelected ? colors.accent : colors.bgPrimary,
-                      color: isSelected ? '#000000' : colors.textSecondary,
-                      fontSize: typography.sizeSm,
-                      fontWeight: 600,
+                      width: '38px',
+                      height: '38px',
+                      borderRadius: '10px',
+                      border: `1px solid ${isSelected ? 'var(--color-brand, #6366f1)' : 'var(--color-border, #252535)'}`,
+                      background: isSelected ? 'var(--color-brand, #6366f1)' : 'var(--color-surface, #111118)',
+                      color: isSelected ? '#fff' : 'var(--color-fg-muted, #8888a8)',
+                      fontSize: '13px',
+                      fontWeight: 700,
                       cursor: isDisabled ? 'not-allowed' : 'pointer',
                       opacity: isDisabled ? 0.3 : 1,
-                      transition: 'background 150ms, border-color 150ms',
+                      transition: 'background 150ms, border-color 150ms, color 150ms',
                     }}
                   >
                     {n}
@@ -187,16 +177,19 @@ export function GameLobbyRoom({
               {startGameLabel}
             </Button>
           ) : (
-            <p
+            <div
               style={{
-                fontSize: typography.sizeSm,
-                color: colors.textSecondary,
+                padding: '12px 16px',
+                background: 'var(--color-surface, #111118)',
+                border: '1px solid var(--color-border, #252535)',
+                borderRadius: '12px',
                 textAlign: 'center',
-                margin: 0,
               }}
             >
-              {startGameHintLabel} ({playerCount}/{minPlayersToStart})
-            </p>
+              <p style={{ fontSize: '13px', color: 'var(--color-fg-muted, #8888a8)', margin: 0 }}>
+                {startGameHintLabel} ({playerCount}/{minPlayersToStart})
+              </p>
+            </div>
           )
         ) : (
           <Button variant="secondary" fullWidth onClick={onMatchAgain}>
@@ -205,7 +198,7 @@ export function GameLobbyRoom({
         )}
 
         {/* ── Leave ─────────────────────────────────────────────────────── */}
-        <Button variant="secondary" fullWidth onClick={onLeave}>
+        <Button variant="ghost" fullWidth onClick={onLeave}>
           {leaveRoomLabel}
         </Button>
       </div>
